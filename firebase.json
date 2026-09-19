@@ -1,11 +1,15 @@
 {
   "hosting": {
-    "source": "public",
+    "source": "frontend",
     "frameworksBackend": {},
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
     ]
+  },
+  "functions": {
+    "source": "backend",
+    "runtime": "nodejs22"
   }
 }

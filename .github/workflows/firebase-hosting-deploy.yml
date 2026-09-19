@@ -15,15 +15,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: public/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: public
+        working-directory: frontend
 
       - name: Build
         run: npm run build
-        working-directory: public
+        working-directory: frontend
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
