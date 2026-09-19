@@ -120,7 +120,6 @@ export function CompanyIntake() {
   const [draft, setDraft] = usePersistedState(storageKeys.onboardingDraft, initialDraft, isOnboardingDraft);
   const { step, discovered, competitors, audiences, competitorInput, audienceInput } = draft;
   const [discovering, setDiscovering] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [discoveryError, setDiscoveryError] = useState("");
   const router = useRouter();
 
@@ -213,13 +212,7 @@ export function CompanyIntake() {
     }
   }
 
-  async function continueFlow() {
-    if (step < steps.length - 1) {
-      updateDraft({ step: step + 1 });
-      return;
-    }
-
-    setSaving(true);
+  async function syncOnboarding() {
     try {
       const details = websiteDetails();
       const clientId = await ensureClient(details.website, details.domain);
@@ -236,6 +229,15 @@ export function CompanyIntake() {
     } catch {
       // The persisted onboarding draft is the offline fallback consumed by /research.
     }
+  }
+
+  function continueFlow() {
+    if (step < steps.length - 1) {
+      updateDraft({ step: step + 1 });
+      return;
+    }
+
+    void syncOnboarding();
     router.push("/research");
   }
 
@@ -399,15 +401,14 @@ export function CompanyIntake() {
           className="button secondary"
           type="button"
           onClick={() => updateDraft({ step: Math.max(0, step - 1) })}
-          disabled={step === 0 || saving}
+          disabled={step === 0}
         >
           <ArrowLeft size={17} aria-hidden="true" /> Back
         </button>
         <span>You can edit these inputs later.</span>
-        <button className="button primary" type="button" onClick={continueFlow} disabled={discovering || saving}>
-          {saving ? <LoaderCircle className="spin" size={17} aria-hidden="true" /> : null}
-          {saving ? "Saving…" : step === steps.length - 1 ? "Save and research" : "Continue"}
-          {!saving ? <ArrowRight size={17} aria-hidden="true" /> : null}
+        <button className="button primary" type="button" onClick={continueFlow} disabled={discovering}>
+          {step === steps.length - 1 ? "Save and research" : "Continue"}
+          <ArrowRight size={17} aria-hidden="true" />
         </button>
       </footer>
     </form>
