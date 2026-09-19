@@ -2,9 +2,11 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 
-const client = new OpenAI();
-
 const MODEL = "gpt-5.6-sol";
+
+function openAI() {
+  return new OpenAI();
+}
 
 /**
  * Research input shape — company/audience name -> platform -> what was found there.
@@ -88,7 +90,7 @@ Rules:
  * and selected when persisting these as `suggestions` docs.
  */
 export async function generateSuggestions(research: Research, count = 6): Promise<Suggestion[]> {
-  const response = await client.responses.parse({
+  const response = await openAI().responses.parse({
     model: MODEL,
     input: [
       { role: "system", content: SYSTEM },

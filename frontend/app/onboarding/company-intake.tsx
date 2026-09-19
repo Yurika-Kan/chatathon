@@ -7,6 +7,7 @@ import {
   Check,
   Globe2,
   Link2,
+  LoaderCircle,
   MessageCircle,
   Plus,
   Search,
@@ -17,6 +18,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CompanyMark } from "@/app/ui/company-mark";
+import { backendPost } from "@/lib/backend";
 
 const steps = ["Connect", "Discover", "Campaign"] as const;
 const campaignPlatforms = ["Reddit", "LinkedIn", "Instagram", "X"];
@@ -84,6 +86,8 @@ function EditableList({
 export function CompanyIntake() {
   const [step, setStep] = useState(0);
   const [discovered, setDiscovered] = useState(false);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoveryError, setDiscoveryError] = useState("");
   const [competitors, setCompetitors] = useState<string[]>([]);
   const [audiences, setAudiences] = useState<string[]>([]);
   const [competitorInput, setCompetitorInput] = useState("");
@@ -102,10 +106,35 @@ export function CompanyIntake() {
     setValue("");
   }
 
-  function discoverMarket() {
-    setCompetitors(suggestedCompetitors);
-    setAudiences(suggestedAudiences);
-    setDiscovered(true);
+  async function discoverMarket() {
+    const website = document.querySelector<HTMLInputElement>('input[name="website"]')?.value.trim();
+    if (!website) {
+      setDiscoveryError("Add a company website first.");
+      return;
+    }
+
+    setDiscovering(true);
+    setDiscoveryError("");
+
+    try {
+      const normalized = website.includes("://") ? website : `https://${website}`;
+      const domain = new URL(normalized).hostname.replace(/^www\./, "");
+      const result = await backendPost<{ output?: { rows?: Array<{ competitor_domain?: string }> } }>(
+        "/monid/competitors",
+        { domain },
+      );
+      const found = (result.output?.rows ?? [])
+        .map((row) => row.competitor_domain?.replace(/^www\./, ""))
+        .filter((item): item is string => Boolean(item));
+
+      setCompetitors(found.length ? found : suggestedCompetitors);
+      setAudiences(suggestedAudiences);
+      setDiscovered(true);
+    } catch (error) {
+      setDiscoveryError(error instanceof Error ? error.message : "Market discovery failed.");
+    } finally {
+      setDiscovering(false);
+    }
   }
 
   function continueFlow() {
@@ -202,8 +231,9 @@ export function CompanyIntake() {
               <h3>Find competitors and audience groups</h3>
               <p>The MVP will use the company website and social links to propose both lists.</p>
             </div>
-            <button className="button primary" type="button" onClick={discoverMarket}>
-              <Sparkles size={17} aria-hidden="true" /> Discover market
+            <button className="button primary" type="button" onClick={discoverMarket} disabled={discovering}>
+              {discovering ? <LoaderCircle className="spin" size={17} aria-hidden="true" /> : <Sparkles size={17} aria-hidden="true" />}
+              {discovering ? "Finding market…" : "Discover market"}
             </button>
           </div>
         ) : (
@@ -230,6 +260,7 @@ export function CompanyIntake() {
             />
           </div>
         )}
+        {discoveryError ? <p className="inline-error" role="alert">{discoveryError}</p> : null}
       </section>
 
       <section className="flow-step" hidden={step !== 2} aria-labelledby="campaign-step-title">

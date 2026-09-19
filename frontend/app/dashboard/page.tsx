@@ -32,9 +32,9 @@ export default function DashboardPage() {
         title="Keep the campaign loop moving."
         description="See what needs a decision, what is running, and what Campco has learned across active organic campaigns."
         action={(
-          <button className="button primary" type="button">
+          <Link className="button primary" href="/onboarding">
             <CirclePlus size={17} aria-hidden="true" /> New campaign
-          </button>
+          </Link>
         )}
       />
 
