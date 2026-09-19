@@ -8,10 +8,12 @@
     :root {
       color-scheme: light;
       --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --black: #111827;
+      --white: #ffffff;
       --canvas: #f6f8fb;
-      --surface: #ffffff;
+      --surface: var(--white);
       --surface-subtle: #f9fafb;
-      --ink: #111827;
+      --ink: var(--black);
       --ink-soft: #344054;
       --muted: #667085;
       --line: #e4e7ec;
@@ -21,8 +23,6 @@
       --blue-soft: #eaf3ff;
       --coral: #f47f6b;
       --coral-soft: #fff0ed;
-      --green: #16875f;
-      --green-soft: #e9f8f1;
       --lime: #c9ff45;
       --lime-strong: #a9ed16;
       --lime-soft: #f1ffd0;
@@ -345,11 +345,10 @@
     button.chip:hover,
     .chip-active { border-color: #bbd6ff; color: var(--blue-strong); background: var(--blue-soft); }
     .chip-coral { border-color: #ffd4cc; color: #9a3d2b; background: var(--coral-soft); }
-    .chip-green { border-color: #bfe9d8; color: #0f6f4d; background: var(--green-soft); }
     .chip-lime { border-color: #c9ef70; color: var(--lime-ink); background: var(--lime-soft); }
 
     .status-dot { width: 8px; height: 8px; display: inline-block; flex: none; border-radius: 50%; background: var(--muted); }
-    .status-dot.live { background: var(--green); }
+    .status-dot.live { background: var(--lime-strong); }
     .status-dot.review { background: var(--amber); }
     .status-dot.testing { background: var(--blue); }
     .status-dot.draft { background: #98a2b3; }
@@ -493,7 +492,7 @@
     .stepper-number { width: 30px; height: 30px; display: grid; place-items: center; flex: none; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); }
     .stepper-item.is-complete,
     .stepper-item.is-current { color: var(--ink); }
-    .stepper-item.is-complete .stepper-number { color: #fff; border-color: var(--green); background: var(--green); }
+    .stepper-item.is-complete .stepper-number { color: var(--lime-ink); border-color: var(--lime-strong); background: var(--lime); }
     .stepper-item.is-current .stepper-number { color: var(--lime-ink); border-color: var(--lime-strong); background: var(--lime); }
     .onboarding-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--space-5); align-items: start; }
     .setup-main { min-width: 0; display: grid; gap: var(--space-5); }
@@ -551,9 +550,9 @@
     .source-detail span { margin-top: 2px; color: var(--muted); font-size: 11px; }
     .source-mark { width: 38px; height: 38px; display: grid; place-items: center; flex: none; border-radius: 10px; color: var(--blue-strong); background: var(--blue-soft); font-size: 9px; font-weight: 800; letter-spacing: .05em; }
     .source-detail { min-width: 0; }
-    .source-status { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--green); font-size: 12px; font-weight: 650; }
+    .source-status { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--lime-ink); font-size: 12px; font-weight: 650; }
     .status-dot.is-success,
-    .status-dot.is-active { background: var(--green); }
+    .status-dot.is-active { background: var(--lime-strong); }
     .field { min-width: 0; }
     .field input,
     .field select { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--surface); }
@@ -563,7 +562,7 @@
     .memory-statement { margin: 0 0 24px; font-size: clamp(21px, 2.3vw, 29px); font-weight: 600; letter-spacing: -.03em; line-height: 1.58; }
     .media-fragment { min-height: 46px; margin: 3px 3px 3px 4px; padding: 5px 9px; flex-direction: column; align-items: flex-start; justify-content: center; font-size: 12px; line-height: 1.1; }
     .media-fragment small { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; font-weight: 600; }
-    .media-fragment-portrait { color: #155d47; background: var(--green-soft); }
+    .media-fragment-portrait { color: var(--lime-ink); background: var(--lime-soft); }
     .media-fragment-product { color: #174c9d; background: var(--blue-soft); }
     .media-fragment-quote { max-width: 210px; color: #8e3e2f; background: var(--coral-soft); }
     .media-fragment-quote q { font-weight: 650; }
@@ -606,7 +605,7 @@
     .hypothesis-footer { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
     .hypothesis-header h3 { margin: 0; font-size: 18px; }
     .confidence { display: inline-flex; padding: 5px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap; }
-    .confidence-high { color: #0f6f4d; background: var(--green-soft); }
+    .confidence-high { color: var(--lime-ink); background: var(--lime-soft); }
     .confidence-medium { color: #9a3d2b; background: var(--coral-soft); }
     .confidence-low { color: var(--amber); background: var(--amber-soft); }
     .hypothesis-statement { margin: 18px 0; font-size: clamp(19px, 2vw, 25px); font-weight: 600; letter-spacing: -.025em; line-height: 1.5; }
@@ -649,11 +648,11 @@
     .campaign-row-meta { margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
     .chip-testing { color: var(--blue-strong); border-color: #bbd6ff; background: var(--blue-soft); }
     .chip-review { color: var(--amber); border-color: #f2d9ad; background: var(--amber-soft); }
-    .chip-live { color: var(--green); border-color: #bfe9d8; background: var(--green-soft); }
+    .chip-live { color: var(--lime-ink); border-color: #c9ef70; background: var(--lime-soft); }
     .chip-draft { color: var(--muted); background: var(--surface-subtle); }
     .chip-testing .status-dot { background: var(--blue); }
     .chip-review .status-dot { background: var(--amber); }
-    .chip-live .status-dot { background: var(--green); }
+    .chip-live .status-dot { background: var(--lime-strong); }
     .chip-draft .status-dot { background: #98a2b3; }
     .campaign-summary { padding: clamp(18px, 2.5vw, 28px); }
     .campaign-summary-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
@@ -670,7 +669,7 @@
     .mosaic-card-hook { grid-column: span 4; background: var(--coral-soft); }
     .mosaic-card-channel { grid-column: span 4; }
     .mosaic-label { margin-bottom: 8px; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
-    .evidence-note { margin-top: 18px; color: var(--green); font-size: 10px; font-weight: 700; }
+    .evidence-note { margin-top: 18px; color: var(--lime-ink); font-size: 10px; font-weight: 700; }
     .campaign-art { min-height: 132px; background: linear-gradient(160deg, #dfeeff 0 46%, #7cb8f6 46% 57%, #386e5b 57% 100%); }
     .campaign-art svg { width: 100%; height: 132px; display: block; }
     .mosaic-card-visual figcaption { padding: 10px 14px; color: var(--muted); font-size: 10px; }
@@ -743,7 +742,7 @@
     .evaluation-summary { display: grid; grid-template-columns: 88px 1fr; gap: 14px; align-items: center; }
     .evaluation-summary h2 { margin: 4px 0; font-size: 18px; }
     .evaluation-summary p:last-child { margin: 0; color: var(--muted); font-size: 11px; }
-    .score-ring { width: 82px; height: 82px; display: grid; place-content: center; border-radius: 50%; background: radial-gradient(circle at center, #fff 55%, transparent 57%), conic-gradient(var(--green) 0 88%, #e7ebf1 88%); text-align: center; }
+    .score-ring { width: 82px; height: 82px; display: grid; place-content: center; border-radius: 50%; background: radial-gradient(circle at center, #fff 55%, transparent 57%), conic-gradient(var(--lime-strong) 0 88%, #e7ebf1 88%); text-align: center; }
     .score-ring strong,
     .score-ring span { display: block; }
     .score-ring strong { font-size: 23px; }
@@ -1019,7 +1018,7 @@
           <article class="campaign-input-row">
             <span class="campaign-thumb campaign-thumb-blue" aria-hidden="true"></span>
             <div class="row-copy"><strong>Quiet Confidence</strong><span>Spring product launch / 18 assets</span></div>
-            <span class="chip chip-green"><span class="status-dot live"></span>Live</span>
+            <span class="chip chip-lime"><span class="status-dot live"></span>Live</span>
             <button class="button button-quiet button-small" type="button">Edit</button>
           </article>
           <article class="campaign-input-row">
@@ -1703,13 +1702,13 @@
 
           <div class="design-grid">
             <section class="surface surface-pad">
-              <div class="surface-header"><h2>Color</h2><span class="muted small">Semantic, not decorative</span></div>
+              <div class="surface-header"><h2>Color</h2><span class="muted small">Three accents, two neutrals</span></div>
               <div class="swatches">
-                <div class="swatch"><div class="swatch-color" style="background:#111827"></div><span>Ink<br>#111827</span></div>
-                <div class="swatch"><div class="swatch-color" style="background:#1677ff"></div><span>Selection<br>#1677FF</span></div>
-                <div class="swatch"><div class="swatch-color" style="background:#c9ff45"></div><span>Primary action<br>#C9FF45</span></div>
-                <div class="swatch"><div class="swatch-color" style="background:#f47f6b"></div><span>Experiment<br>#F47F6B</span></div>
-                <div class="swatch"><div class="swatch-color" style="background:#16875f"></div><span>Verified<br>#16875F</span></div>
+                <div class="swatch"><div class="swatch-color" style="background:#111827"></div><span>Black<br>#111827</span></div>
+                <div class="swatch"><div class="swatch-color" style="background:#ffffff"></div><span>White<br>#FFFFFF</span></div>
+                <div class="swatch"><div class="swatch-color" style="background:#1677ff"></div><span>Blue<br>#1677FF</span></div>
+                <div class="swatch"><div class="swatch-color" style="background:#f47f6b"></div><span>Coral<br>#F47F6B</span></div>
+                <div class="swatch"><div class="swatch-color" style="background:#c9ff45"></div><span>Lime<br>#C9FF45</span></div>
               </div>
             </section>
 
@@ -1731,7 +1730,7 @@
                   <button class="button button-coral" type="button">Create test</button>
                   <button class="button" type="button" disabled>Disabled</button>
                 </div>
-                <div class="inline"><span class="chip chip-active">Selected</span><span class="chip chip-green"><span class="status-dot live"></span>Verified</span><span class="chip chip-coral">Hypothesis</span><span class="chip"><span class="status-dot draft"></span>Draft</span></div>
+                <div class="inline"><span class="chip chip-active">Active</span><span class="chip chip-lime"><span class="status-dot live"></span>Live</span><span class="chip chip-coral">Hypothesis</span><span class="chip"><span class="status-dot draft"></span>Draft</span></div>
               </div>
             </section>
 
