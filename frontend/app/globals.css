@@ -1401,6 +1401,25 @@ textarea::placeholder {
   color: var(--ink);
 }
 
+.campaign-table tbody tr:hover td {
+  background: #fafbfc;
+}
+
+.campaign-name-link {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 720;
+}
+
+.campaign-name-link:hover {
+  color: #3157ca;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .campaign-table td strong,
 .campaign-table td small {
   display: block;
@@ -2922,7 +2941,7 @@ meter::-moz-meter-bar {
     text-transform: uppercase;
   }
 
-  .campaign-table td:first-child strong,
+  .campaign-table td:first-child .campaign-name-link,
   .campaign-table td:first-child small {
     grid-column: 2;
   }

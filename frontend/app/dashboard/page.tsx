@@ -32,9 +32,9 @@ export default function DashboardPage() {
         title="Keep the campaign loop moving."
         description="See what needs a decision, what is running, and what Campco has learned across active organic campaigns."
         action={(
-          <button className="button primary" type="button">
+          <Link className="button primary" href="/onboarding">
             <CirclePlus size={17} aria-hidden="true" /> New campaign
-          </button>
+          </Link>
         )}
       />
 
@@ -76,7 +76,7 @@ export default function DashboardPage() {
               <p className="eyebrow">Campaigns</p>
               <h2 id="campaigns-title">Current work</h2>
             </div>
-            <button className="button text-button" type="button">View all</button>
+            <Link className="button text-button" href="/campaign">View campaign data</Link>
           </div>
 
           <div className="campaign-table-wrap">
@@ -94,7 +94,7 @@ export default function DashboardPage() {
                 {campaignSummaries.map((campaign) => (
                   <tr key={campaign.id}>
                     <td data-label="Campaign">
-                      <strong>{campaign.name}</strong>
+                      <Link className="campaign-name-link" href="/campaign">{campaign.name}</Link>
                       <small>{campaign.platforms.join(" · ")}</small>
                     </td>
                     <td data-label="State">
