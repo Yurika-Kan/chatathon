@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 import { LEVERS, LEVER_NAMES, mediaTypeFor } from "@/lib/levers";
+import { withGatewayRetry } from "@/lib/openaiRetry";
 import type {
   AudiencePlatformData,
   CompanyPlatformData,
@@ -15,11 +16,13 @@ function openAI() {
   return new OpenAI();
 }
 
-// video is a valid lever value in LEVERS.format (leverStats/other code may still
-// reference it), but no renderer exists for it here yet (see lib/render.ts).
-// Excluding it from the schema — not just the prompt — makes it structurally
-// impossible for generation to pick a format nothing can render.
-const GENERATION_FORMATS = ["single_image", "carousel", "text_only"] as const;
+// video and carousel are valid lever values in LEVERS.format (leverStats/other
+// code may still reference them), but generation only ever produces one image
+// per post idea: no renderer exists for video (see lib/render.ts), and carousel
+// is deliberately out — one image per post idea is the product decision, not a
+// missing capability. Excluding both from the schema, not just the prompt,
+// makes it structurally impossible for generation to pick either.
+const GENERATION_FORMATS = ["single_image", "text_only"] as const;
 
 const LeversSchema = z.object({
   hook: z.enum(LEVERS.hook),
@@ -123,7 +126,7 @@ So:
 
 Lever values:
 - hook: question, bold_claim, statistic, story
-- format: single_image, carousel, text_only (video is not available in this environment — never choose it, even if the evidence's engaging_formats mentions reels or video)
+- format: single_image, text_only (one image per post idea, never a carousel or video — even if the evidence's engaging_formats mentions reels, carousels, or video)
 - tone: authoritative, casual, contrarian
 - cta: none, soft, direct
 - length: short, medium, long
@@ -133,7 +136,7 @@ Lever values:
 - copy.hook: the first line, and the only line most people see. It must match the hook lever you assigned. No throat-clearing.
 - copy.body: the rest of the post, picking up after the hook. Do NOT repeat the hook. The published post is the hook, a blank line, then the body. Length must match the length lever.
 - copy.hashtags: grounded in the trending_topics and content_examples in the evidence. Follow the style profile's hashtag usage. Empty array is a valid answer for platforms where hashtags read as spam.
-- visualPrompts: scene descriptions for the image model. Describe ONE clear subject, its composition, lighting, and palette in a single flowing sentence or two — write a scene, not a brief. Count must match the format: single_image takes exactly 1, carousel takes 4, text_only takes 0.
+- visualPrompts: scene descriptions for the image model. Describe ONE clear subject, its composition, lighting, and palette in a single flowing sentence or two — write a scene, not a brief. Count must match the format: single_image takes exactly 1, text_only takes 0.
   Image models render text on the image unreliably — a heading of 1-3 short words can work, but a list, a paragraph, or more than a few words almost always comes out garbled. So: default to NO on-image text at all, let the composition and the photographed/illustrated subject carry the idea. Only include on-image text if it is a single short phrase (3 words or fewer) that is essential to the concept, and say so as "text overlay: '...'" separate from the scene description — never ask for a list, multiple lines, or a paragraph rendered into the image.
 - levers: the values this piece actually used. These are recorded and attributed, so they must describe what you really did, not what you intended.
 - rationale: one or two sentences naming the specific evidence this acts on. Falsifiable, not a platitude.
@@ -176,13 +179,14 @@ export async function generateWaveMedia({
 }: GenerateWaveArgs): Promise<Wave> {
   const evidence = resolveEvidence(suggestion, research);
 
-  const response = await openAI().responses.parse({
-    model: MODEL,
-    input: [
-      { role: "system", content: SYSTEM },
-      {
-        role: "user",
-        content: `Draft exactly ${count} pieces of media, split evenly between variant A and variant B.
+  const response = await withGatewayRetry(() =>
+    openAI().responses.parse({
+      model: MODEL,
+      input: [
+        { role: "system", content: SYSTEM },
+        {
+          role: "user",
+          content: `Draft exactly ${count} pieces of media, split evenly between variant A and variant B.
 
 Platform: ${suggestion.platform}
 
@@ -199,10 +203,11 @@ ${JSON.stringify(styleProfile ?? "none supplied — infer a neutral brand voice"
 </style_profile>
 
 ${biasInstruction(leverBias)}`,
-      },
-    ],
-    text: { format: zodTextFormat(WaveSchema, "wave") },
-  });
+        },
+      ],
+      text: { format: zodTextFormat(WaveSchema, "wave") },
+    }),
+  );
 
   const wave = response.output_parsed;
   if (!wave) throw new Error("Model returned no parseable wave");

@@ -170,7 +170,7 @@ export function CampaignWorkspace() {
                     <div key={item.summary}><strong>{item.summary}</strong><span>{item.detail}</span></div>
                   ))}
                 </div>
-                <Link className="button primary campaign-generate-link" href="/campaign/generate">
+                <Link className="button primary campaign-generate-link" href={`/campaign/generate?suggestion=${selectedOpportunity.id}`}>
                   Generate campaign
                 </Link>
               </aside>

@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
+import { withGatewayRetry } from "@/lib/openaiRetry";
 
 const MODEL = "gpt-5.6-sol";
 
@@ -90,21 +91,23 @@ Rules:
  * and selected when persisting these as `suggestions` docs.
  */
 export async function generateSuggestions(research: Research, count = 6): Promise<Suggestion[]> {
-  const response = await openAI().responses.parse({
-    model: MODEL,
-    input: [
-      { role: "system", content: SYSTEM },
-      {
-        role: "user",
-        content: `Generate up to ${count} suggestions from this research.
+  const response = await withGatewayRetry(() =>
+    openAI().responses.parse({
+      model: MODEL,
+      input: [
+        { role: "system", content: SYSTEM },
+        {
+          role: "user",
+          content: `Generate up to ${count} suggestions from this research.
 
 <research>
 ${JSON.stringify(research, null, 2)}
 </research>`,
-      },
-    ],
-    text: { format: zodTextFormat(SuggestionSetSchema, "suggestions") },
-  });
+        },
+      ],
+      text: { format: zodTextFormat(SuggestionSetSchema, "suggestions") },
+    }),
+  );
 
   const parsed = response.output_parsed;
   if (!parsed) throw new Error("Model returned no parseable suggestions");

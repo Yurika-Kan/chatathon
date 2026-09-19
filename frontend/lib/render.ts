@@ -13,11 +13,11 @@ function aspectFor(platform: string): string {
 
 // MiniMax's image endpoint has an undocumented concurrency ceiling — past it,
 // requests silently come back COMPLETED with a null output (see generateImage's
-// retry in lib/monid.ts). A wave with carousels can need up to
-// media.length * ASSET_COUNT.carousel images; running all of them at once
-// (16 for a 4-piece all-carousel wave) reliably crosses that ceiling. Capping
-// concurrency here, across the whole wave rather than per-piece, keeps the
-// in-flight count under it regardless of how many pieces or carousels a wave has.
+// retry in lib/monid.ts). generateWaveMedia currently caps every piece at one
+// image (single_image or text_only — see GENERATION_FORMATS there), so a wave
+// needs at most media.length images; ASSET_COUNT still has higher values for
+// formats generation doesn't produce right now (e.g. carousel), so this cap
+// stays as a guard against however many images a wave ends up needing.
 const MAX_CONCURRENT_RENDERS = 3;
 
 async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
