@@ -4,6 +4,8 @@ export type ResearchRequest = {
   audiences: string[];
 };
 
+export type ResearchEntityType = "company" | "audience";
+
 export type ResearchResponse = {
   companies: Record<string, string>;
   audiences: Record<string, string>;

@@ -8,9 +8,8 @@ export default function ResearchPage() {
   return (
     <div className="page research-page">
       <PageHeader
-        eyebrow="Research workspace"
-        title="Build the research input."
-        description="Choose platforms, companies, and audience groups. The research agent will return competitor analysis, audience signals, and the standout finding."
+        eyebrow="Research library"
+        title="What do you want to understand?"
       />
       <ResearchBuilder />
     </div>
