@@ -1,70 +1,72 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
-import { useState } from "react";
-import type { MediaDoc, Wave } from "@/lib/postGenerator";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+import { campaignSuggestions } from "@/lib/campaigns";
+import type { MediaDoc, StyleProfile, Wave } from "@/lib/postGenerator";
+import type { Research, Suggestion } from "@/lib/suggestions";
+import { PageHeader } from "@/app/ui/page-header";
 
-const SAMPLE_SUGGESTION = JSON.stringify(
-  {
-    id: "sug_001",
-    signalType: "gap",
-    platform: "instagram",
-    angle: "Claim the streak-loss moment nobody in the category will touch",
-    rationale:
-      "Duolingo's gaps name that they never acknowledge users who quit, while streak-loss grief is a live trending topic for Gen Z learners on the same platform.",
-    evidence: [
-      { source: "company", name: "Duolingo", platform: "instagram" },
-      { source: "audience", name: "Gen Z language learners", platform: "instagram" },
-    ],
-  },
-  null,
-  2,
-);
+const SIGNAL_TYPE: Record<string, Suggestion["signalType"]> = {
+  Trend: "trend",
+  Gap: "gap",
+  "Viral gap": "viral",
+};
 
-const SAMPLE_RESEARCH = JSON.stringify(
-  {
-    companies: {
-      Duolingo: {
-        instagram: {
-          summary: "Unhinged mascot content. Owl does absurd office-humor skits.",
-          wins: ["Mascot as a character with opinions", "Trend audio within hours"],
-          gaps: ["Never shows the product", "Never acknowledges users who quit"],
-          content_examples: [{ url: "https://instagram.com/p/123", note: "Owl menaces an intern, 4M views" }],
-        },
-      },
-    },
-    audiences: {
-      "Gen Z language learners": {
-        instagram: {
-          trending_topics: ["streak loss grief", "study-with-me but chaotic"],
-          tone: "self-deprecating, fast, in on the joke",
-          engaging_formats: ["reels", "carousels"],
-          content_examples: [{ url: "https://instagram.com/p/456", note: "Streak-loss meme, 900k likes" }],
-        },
+// Fixture standing in for the not-yet-built research pipeline (see lib/research.ts).
+// evidence below cites these same names/platforms so resolveEvidence in
+// postGenerator.ts actually resolves something to ground the copy in.
+const RESEARCH: Research = {
+  companies: {
+    Duolingo: {
+      instagram: {
+        summary: "Unhinged mascot content. Owl does absurd office-humor skits.",
+        wins: ["Mascot as a character with opinions", "Trend audio within hours"],
+        gaps: ["Never shows the product", "Never acknowledges users who quit"],
+        content_examples: [{ url: "https://instagram.com/p/123", note: "Owl menaces an intern, 4M views" }],
       },
     },
   },
-  null,
-  2,
-);
-
-const SAMPLE_STYLE = JSON.stringify(
-  {
-    tone: "dry, self-aware, never salesy",
-    sentenceLength: "short — usually under 12 words",
-    emojiUsage: "rare, never more than one",
-    hashtagUsage: "2-3 on instagram, none on linkedin or reddit",
-    openingPatterns: ["states a blunt fact", "opens mid-thought"],
-    vocabulary: ["streak", "day one", "actually"],
+  audiences: {
+    "Gen Z language learners": {
+      instagram: {
+        trending_topics: ["streak loss grief", "study-with-me but chaotic"],
+        tone: "self-deprecating, fast, in on the joke",
+        engaging_formats: ["reels", "carousels"],
+        content_examples: [{ url: "https://instagram.com/p/456", note: "Streak-loss meme, 900k likes" }],
+      },
+    },
   },
-  null,
-  2,
-);
+};
 
-export default function CampaignPage() {
-  const [suggestion, setSuggestion] = useState(SAMPLE_SUGGESTION);
-  const [research, setResearch] = useState(SAMPLE_RESEARCH);
-  const [styleProfile, setStyleProfile] = useState(SAMPLE_STYLE);
+const STYLE_PROFILE: StyleProfile = {
+  tone: "dry, self-aware, never salesy",
+  sentenceLength: "short — usually under 12 words",
+  emojiUsage: "rare, never more than one",
+  hashtagUsage: "2-3 on instagram, none on linkedin or reddit",
+  openingPatterns: ["states a blunt fact", "opens mid-thought"],
+  vocabulary: ["streak", "day one", "actually"],
+};
+
+const EVIDENCE: Suggestion["evidence"] = [
+  { source: "company", name: "Duolingo", platform: "instagram" },
+  { source: "audience", name: "Gen Z language learners", platform: "instagram" },
+];
+
+export default function GeneratePage() {
+  return (
+    <Suspense fallback={null}>
+      <GenerateView />
+    </Suspense>
+  );
+}
+
+function GenerateView() {
+  const searchParams = useSearchParams();
+  const suggestionId = searchParams.get("suggestion");
+  const opportunity = campaignSuggestions.find((item) => item.id === suggestionId) ?? campaignSuggestions[0];
 
   const [wave, setWave] = useState<Wave | null>(null);
   const [loading, setLoading] = useState(false);
@@ -75,15 +77,19 @@ export default function CampaignPage() {
     setError(null);
     setWave(null);
 
+    const suggestion: Suggestion = {
+      signalType: SIGNAL_TYPE[opportunity.type],
+      platform: opportunity.platforms[0].toLowerCase(),
+      angle: opportunity.angle,
+      rationale: opportunity.rationale,
+      evidence: EVIDENCE,
+    };
+
     try {
       const response = await fetch("/api/generate-posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          suggestion: JSON.parse(suggestion),
-          research: JSON.parse(research),
-          styleProfile: JSON.parse(styleProfile),
-        }),
+        body: JSON.stringify({ suggestion, research: RESEARCH, styleProfile: STYLE_PROFILE }),
       });
 
       const data = await response.json();
@@ -97,33 +103,27 @@ export default function CampaignPage() {
   }
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 1.5rem", fontFamily: "var(--font-geist-sans), sans-serif" }}>
-      <h1 style={{ fontSize: "2rem", fontWeight: 700 }}>Wave media generator</h1>
-      <p style={{ opacity: 0.6, marginTop: "0.25rem" }}>
-        Approved suggestion in, lever-assigned A/B wave of <code>media</code> docs out.
-      </p>
+    <div className="page">
+      <Link className="back-link" href="/campaign">
+        <ArrowLeft size={16} aria-hidden="true" /> Campaign
+      </Link>
 
-      <div style={{ display: "grid", gap: "1rem", marginTop: "2rem" }}>
-        <Field label="Suggestion — one item from POST /api/suggestions">
-          <textarea value={suggestion} onChange={(e) => setSuggestion(e.target.value)} rows={8} style={monoInputStyle} />
-        </Field>
-        <Field label="Research — evidence refs on the suggestion are resolved against this">
-          <textarea value={research} onChange={(e) => setResearch(e.target.value)} rows={12} style={monoInputStyle} />
-        </Field>
-        <Field label="Style profile — extracted from the company's own top posts">
-          <textarea value={styleProfile} onChange={(e) => setStyleProfile(e.target.value)} rows={8} style={monoInputStyle} />
-        </Field>
-      </div>
-
-      <button onClick={generate} disabled={loading} style={buttonStyle}>
-        {loading ? "Drafting copy + rendering images (~30-60s)…" : "Generate wave"}
-      </button>
+      <PageHeader
+        eyebrow="Wave generator"
+        title={opportunity.title}
+        description={opportunity.angle}
+        action={(
+          <button className="button primary" onClick={generate} disabled={loading} type="button">
+            {loading ? "Drafting copy + rendering images (~30-60s)…" : "Generate wave"}
+          </button>
+        )}
+      />
 
       {error && <p style={{ color: "#c00", marginTop: "1rem" }}>{error}</p>}
 
       {wave && (
         <>
-          <p style={{ marginTop: "2rem", fontSize: "0.9rem" }}>
+          <p style={{ marginTop: "1.5rem", fontSize: "0.9rem" }}>
             Testing lever: <strong>{wave.testedLever}</strong> — A and B differ on this and agree on everything else.
           </p>
 
@@ -141,7 +141,7 @@ export default function CampaignPage() {
           </details>
         </>
       )}
-    </main>
+    </div>
   );
 }
 
@@ -207,41 +207,3 @@ function MediaCard({ piece }: { piece: MediaDoc }) {
     </article>
   );
 }
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label style={{ display: "grid", gap: "0.35rem", fontSize: "0.85rem" }}>
-      <span style={{ opacity: 0.7 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
-
-const inputStyle: CSSProperties = {
-  width: "100%",
-  padding: "0.6rem 0.75rem",
-  borderRadius: 8,
-  border: "1px solid rgba(128,128,128,0.35)",
-  background: "transparent",
-  color: "inherit",
-  font: "inherit",
-  resize: "vertical",
-};
-
-const monoInputStyle: CSSProperties = {
-  ...inputStyle,
-  fontFamily: "var(--font-geist-mono), monospace",
-  fontSize: "0.75rem",
-};
-
-const buttonStyle: CSSProperties = {
-  marginTop: "1.5rem",
-  padding: "0.7rem 1.4rem",
-  borderRadius: 8,
-  border: "none",
-  background: "#0070f3",
-  color: "white",
-  font: "inherit",
-  fontWeight: 600,
-  cursor: "pointer",
-};

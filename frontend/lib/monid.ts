@@ -84,20 +84,40 @@ export async function runAndWait(
  * Generate one square-ish image from a text prompt via Monid -> MiniMax image-01.
  * Returns a data URL (base64, no expiry — the alternative `url` mode's links
  * expire after 24h, which is a bad fit for anything we might persist).
+ *
+ * MiniMax has an undocumented concurrency ceiling (empirically ~9-10 simultaneous
+ * generations on this key): requests past it still come back `status: COMPLETED`
+ * but with `output: null` — no error field, nothing to distinguish it from a
+ * real failure except that identical requests succeed when retried alone. So
+ * that specific shape (COMPLETED, output null) is treated as transient and
+ * retried; any other failure (timeout, FAILED, BLOCKED) is not.
  */
-export async function generateImage(prompt: string, aspectRatio = "1:1"): Promise<string> {
-  const result = await runAndWait("minimax", "/v1/image_generation", {
+export async function generateImage(prompt: string, aspectRatio = "1:1", attempts = 4): Promise<string> {
+  const body = {
     model: "image-01",
     prompt: prompt.slice(0, 1500), // provider hard limit
     aspect_ratio: aspectRatio,
     response_format: "base64",
     prompt_optimizer: true, // provider-side cleanup; helps most when our prompt is loose
     n: 1,
-  });
+  };
 
-  const output = result.output as { data?: { image_base64?: string[] } } | undefined;
-  const base64 = output?.data?.image_base64?.[0];
-  if (!base64) throw new Error(`Monid image_generation returned no image: ${JSON.stringify(result.output)}`);
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const result = await runAndWait("minimax", "/v1/image_generation", body);
+    const output = result.output as { data?: { image_base64?: string[] } } | null | undefined;
+    const base64 = output?.data?.image_base64?.[0];
+    if (base64) return `data:image/jpeg;base64,${base64}`;
 
-  return `data:image/jpeg;base64,${base64}`;
+    if (output !== null || attempt === attempts) {
+      throw new Error(`Monid image_generation returned no image after ${attempt} attempt(s): ${JSON.stringify(result.output)}`);
+    }
+
+    // output === null on a COMPLETED run — capacity ceiling, not a real error.
+    // Back off before retrying: firing straight back into a saturated window
+    // just loses again, and the 199s/5-fail run confirms an immediate retry
+    // isn't enough headroom by itself. Backoff grows with attempt number.
+    await new Promise((resolve) => setTimeout(resolve, attempt * 8000));
+  }
+
+  throw new Error("unreachable"); // satisfies TS; the loop above always returns or throws
 }

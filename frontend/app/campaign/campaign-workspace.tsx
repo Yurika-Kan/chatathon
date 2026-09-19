@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { campaignSuggestions } from "@/lib/campaigns";
@@ -160,6 +160,9 @@ export function CampaignWorkspace() {
                     <div key={item.summary}><strong>{item.summary}</strong><span>{item.detail}</span></div>
                   ))}
                 </div>
+                <Link className="button primary" href={`/campaign/generate?suggestion=${selectedOpportunity.id}`}>
+                  Generate wave <ArrowRight size={17} aria-hidden="true" />
+                </Link>
               </aside>
             </div>
           </section>
