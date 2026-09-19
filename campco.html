@@ -1,0 +1,1818 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campco UI skeleton</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --canvas: #f6f8fb;
+      --surface: #ffffff;
+      --surface-subtle: #f9fafb;
+      --ink: #111827;
+      --ink-soft: #344054;
+      --muted: #667085;
+      --line: #e4e7ec;
+      --line-strong: #cfd5df;
+      --blue: #1677ff;
+      --blue-strong: #095dcc;
+      --blue-soft: #eaf3ff;
+      --coral: #f47f6b;
+      --coral-soft: #fff0ed;
+      --green: #16875f;
+      --green-soft: #e9f8f1;
+      --lime: #c9ff45;
+      --lime-strong: #a9ed16;
+      --lime-soft: #f1ffd0;
+      --lime-ink: #243400;
+      --amber: #b76a08;
+      --amber-soft: #fff6e6;
+      --red: #c9364f;
+      --red-soft: #fff0f3;
+      --shadow-sm: 0 1px 2px rgb(16 24 40 / 5%);
+      --shadow-md: 0 12px 30px rgb(16 24 40 / 8%);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --sidebar: 224px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: var(--canvas); }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input,
+    textarea,
+    select { font: inherit; }
+
+    button,
+    a,
+    input,
+    textarea,
+    select { outline: none; }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      box-shadow: 0 0 0 3px rgb(22 119 255 / 24%);
+    }
+
+    button { cursor: pointer; }
+
+    h1,
+    h2,
+    h3,
+    p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: var(--space-2);
+      font-size: clamp(28px, 3vw, 40px);
+      line-height: 1.05;
+      letter-spacing: -0.045em;
+    }
+
+    h2 {
+      margin-bottom: var(--space-4);
+      font-size: 19px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      margin-bottom: var(--space-2);
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .icon {
+      width: 18px;
+      height: 18px;
+      flex: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: var(--sidebar) minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+      padding: 24px 16px 18px;
+      border-right: 1px solid var(--line);
+      background: rgb(255 255 255 / 94%);
+      backdrop-filter: blur(10px);
+      z-index: 5;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px;
+      color: var(--ink);
+      font-size: 19px;
+      font-weight: 750;
+      letter-spacing: -0.035em;
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      color: #fff;
+      background: var(--blue);
+      box-shadow: inset 0 -8px 18px rgb(0 62 163 / 18%);
+    }
+
+    .brand-mark svg { width: 17px; height: 17px; }
+
+    .nav-list {
+      display: grid;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .nav-link {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 11px;
+      border-radius: 9px;
+      color: var(--ink-soft);
+      text-decoration: none;
+      transition: color 120ms ease, background-color 120ms ease;
+    }
+
+    .nav-link:hover { background: var(--surface-subtle); }
+    .nav-link[aria-current="page"] { color: var(--blue-strong); background: var(--blue-soft); font-weight: 650; }
+    .nav-spacer { flex: 1; }
+
+    .workspace-card {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--surface-subtle);
+    }
+
+    .workspace-card strong,
+    .workspace-card span { display: block; }
+    .workspace-card span { margin-top: 2px; color: var(--muted); font-size: 12px; }
+
+    .main-shell { min-width: 0; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      padding: 0 clamp(18px, 3vw, 34px);
+      border-bottom: 1px solid var(--line);
+      background: rgb(246 248 251 / 88%);
+      backdrop-filter: blur(14px);
+    }
+
+    .search-control {
+      width: min(520px, 62vw);
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--muted);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .search-control input {
+      min-width: 0;
+      flex: 1;
+      border: 0;
+      color: var(--ink);
+      background: transparent;
+    }
+
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .avatar { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #dce9ff; color: #194ca2; font-weight: 700; font-size: 12px; }
+
+    main { min-width: 0; }
+
+    .app-page {
+      width: min(1480px, 100%);
+      min-width: 0;
+      margin: 0 auto;
+      padding: clamp(24px, 4vw, 48px);
+    }
+
+    .app-page[hidden] { display: none; }
+
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-6);
+      margin-bottom: var(--space-8);
+    }
+
+    .page-header p { max-width: 680px; margin-bottom: 0; color: var(--muted); font-size: 15px; }
+    .eyebrow { margin-bottom: var(--space-2); color: var(--blue-strong); font-size: 12px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .breadcrumb { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; color: var(--muted); font-size: 12px; }
+
+    .button {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      color: var(--ink-soft);
+      background: var(--surface);
+      font-weight: 650;
+      text-decoration: none;
+      box-shadow: var(--shadow-sm);
+      transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+    }
+
+    .button:hover { border-color: #b7c0cd; background: #fbfcfe; }
+    .button-primary { border-color: var(--lime); color: var(--lime-ink); background: var(--lime); }
+    .button-primary:hover { border-color: var(--lime-strong); background: var(--lime-strong); }
+    .button-coral { border-color: var(--coral); color: #843020; background: var(--coral-soft); }
+    .button-ghost { border-color: transparent; background: transparent; box-shadow: none; }
+    .button-small { min-height: 34px; padding: 0 11px; font-size: 12px; }
+    .button:disabled { cursor: not-allowed; opacity: .5; }
+
+    .icon-button {
+      width: 40px;
+      height: 40px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink-soft);
+      background: var(--surface);
+    }
+
+    .surface {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .surface-pad { padding: clamp(16px, 2vw, 24px); }
+    .surface-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
+    .surface-header h2,
+    .surface-header h3 { margin-bottom: 0; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; }
+    .stack { display: grid; gap: var(--space-4); }
+    .stack-sm { display: grid; gap: var(--space-2); }
+    .inline { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+    .chip {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink-soft);
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    button.chip:hover,
+    .chip-active { border-color: #bbd6ff; color: var(--blue-strong); background: var(--blue-soft); }
+    .chip-coral { border-color: #ffd4cc; color: #9a3d2b; background: var(--coral-soft); }
+    .chip-green { border-color: #bfe9d8; color: #0f6f4d; background: var(--green-soft); }
+    .chip-lime { border-color: #c9ef70; color: var(--lime-ink); background: var(--lime-soft); }
+
+    .status-dot { width: 8px; height: 8px; display: inline-block; flex: none; border-radius: 50%; background: var(--muted); }
+    .status-dot.live { background: var(--green); }
+    .status-dot.review { background: var(--amber); }
+    .status-dot.testing { background: var(--blue); }
+    .status-dot.draft { background: #98a2b3; }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--line);
+    }
+
+    .metric { min-width: 0; padding: 14px 16px; background: var(--surface); }
+    .metric strong { display: block; font-size: 19px; letter-spacing: -.02em; }
+    .metric span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+
+    .source-list,
+    .campaign-list,
+    .question-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+
+    .source-row,
+    .campaign-row,
+    .question-item {
+      width: 100%;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      color: var(--ink);
+      background: var(--surface);
+      text-align: left;
+    }
+
+    button.source-row:hover,
+    button.campaign-row:hover,
+    button.question-item:hover { border-color: #bcd5fb; }
+
+    .source-row.is-selected,
+    .campaign-row.is-selected,
+    .question-item.is-selected { border-color: #b8d4ff; background: var(--blue-soft); }
+
+    .row-copy { min-width: 0; flex: 1; }
+    .row-copy strong,
+    .row-copy span { display: block; }
+    .row-copy span { margin-top: 2px; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+
+    .fragment,
+    .evidence-fragment,
+    .media-fragment {
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
+      overflow: hidden;
+      border-radius: 9px;
+      background: var(--blue-soft);
+      box-shadow: inset 0 0 0 1px rgb(9 93 204 / 10%);
+    }
+
+    .fragment svg,
+    .evidence-fragment svg,
+    .media-fragment svg { width: 100%; height: 100%; display: block; }
+
+    .fragment-word {
+      display: inline-block;
+      padding: 3px 9px 5px;
+      border-radius: 8px;
+      color: #11386f;
+      background: #dcecff;
+      white-space: nowrap;
+    }
+
+    .quote {
+      position: relative;
+      padding: 14px 16px 14px 38px;
+      border-left: 3px solid var(--blue);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      color: var(--ink-soft);
+      background: var(--surface-subtle);
+    }
+
+    .quote::before { content: "\201C"; position: absolute; left: 14px; top: 8px; color: var(--blue); font-size: 28px; font-weight: 750; }
+
+    .form-control { display: grid; gap: 7px; }
+    .form-control label { color: var(--ink-soft); font-size: 12px; font-weight: 650; }
+    .input,
+    .select,
+    .textarea {
+      width: 100%;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      color: var(--ink);
+      background: var(--surface);
+    }
+    .textarea { min-height: 100px; resize: vertical; }
+
+    .empty-state {
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--radius-lg);
+      color: var(--muted);
+      text-align: center;
+      background: var(--surface-subtle);
+    }
+
+    .design-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+    .swatches { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .swatch { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+    .swatch-color { height: 70px; }
+    .swatch span { display: block; padding: 8px 9px; color: var(--muted); font-size: 11px; }
+    .type-sample-xl { font-size: 42px; font-weight: 750; letter-spacing: -.045em; line-height: 1; }
+    .type-sample-lg { font-size: 28px; font-weight: 720; letter-spacing: -.035em; }
+
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .button-secondary { color: var(--blue-strong); border-color: #bcd6ff; background: var(--blue-soft); }
+    .button-quiet,
+    .button-text { border-color: transparent; background: transparent; box-shadow: none; }
+    .button-text { min-height: 32px; padding: 0; color: var(--blue-strong); }
+    .button-full { width: 100%; }
+    .count { min-width: 28px; height: 28px; display: inline-grid; place-items: center; border-radius: 999px; color: var(--muted); background: var(--surface-subtle); font-size: 12px; font-weight: 700; }
+    .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .section-heading h2,
+    .section-heading h3,
+    .section-heading p { margin-bottom: 0; }
+    .section-heading.compact { align-items: center; }
+
+    /* Onboarding */
+    .stepper { margin-bottom: var(--space-6); }
+    .stepper ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; list-style: none; }
+    .stepper-item { position: relative; display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .stepper-item:not(:last-child)::after { content: ""; position: absolute; left: 38px; right: 12px; top: 15px; height: 1px; background: var(--line); z-index: -1; }
+    .stepper-number { width: 30px; height: 30px; display: grid; place-items: center; flex: none; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); }
+    .stepper-item.is-complete,
+    .stepper-item.is-current { color: var(--ink); }
+    .stepper-item.is-complete .stepper-number { color: #fff; border-color: var(--green); background: var(--green); }
+    .stepper-item.is-current .stepper-number { color: var(--lime-ink); border-color: var(--lime-strong); background: var(--lime); }
+    .onboarding-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--space-5); align-items: start; }
+    .setup-main { min-width: 0; display: grid; gap: var(--space-5); }
+    .setup-section { padding: clamp(18px, 2.5vw, 28px); }
+    .section-title { min-width: 0; display: flex; align-items: center; gap: 12px; }
+    .section-title h2,
+    .section-title p { margin-bottom: 0; }
+    .section-number { width: 34px; height: 34px; display: grid; place-items: center; flex: none; border-radius: 10px; color: var(--lime-ink); background: var(--lime); font-weight: 800; }
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .input-with-action { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+    .upload-zone { min-height: 86px; display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px dashed var(--line-strong); border-radius: var(--radius-md); color: var(--ink-soft); background: var(--surface-subtle); text-align: left; }
+    .upload-zone:hover { border-color: var(--lime-strong); background: var(--lime-soft); }
+    .upload-zone .icon { color: var(--blue-strong); }
+    .upload-zone strong,
+    .upload-zone small { display: block; }
+    .upload-zone small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .attachment-row { display: flex; gap: 7px; margin: 12px 0 18px; overflow-x: auto; }
+    .attachment-chip { min-height: 30px; display: inline-flex; align-items: center; gap: 6px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink-soft); background: var(--surface-subtle); font-size: 11px; white-space: nowrap; }
+    .attachment-chip .icon { width: 14px; height: 14px; color: var(--blue-strong); }
+    .attachment-chip small { color: var(--muted); }
+    .context-field > small { color: var(--muted); font-size: 10px; }
+    .context-textarea { min-height: 132px; line-height: 1.55; }
+    .campaign-input-list { display: grid; gap: 8px; }
+    .campaign-input-row { min-width: 0; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto auto; gap: 11px; align-items: center; padding: 11px; border: 1px solid var(--line); border-radius: var(--radius-md); }
+    .campaign-thumb { width: 46px; height: 40px; border-radius: 8px; }
+    .campaign-thumb-blue { background: linear-gradient(150deg, #cde6ff 0 50%, #2473bd 51% 100%); }
+    .campaign-thumb-coral { background: linear-gradient(150deg, #ffe4dd 0 50%, #f47f6b 51% 100%); }
+    .campaign-thumb-ink { background: linear-gradient(150deg, #eef1f5 0 50%, #253248 51% 100%); }
+    .platform-panel { position: sticky; top: 88px; }
+    .platform-panel > .muted { margin-bottom: 18px; font-size: 12px; }
+    .platform-list { display: grid; gap: 8px; }
+    .platform-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-md); }
+    .platform-row.is-connected { border-color: #caed7b; background: var(--lime-soft); }
+    .platform-mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; color: var(--blue-strong); background: var(--blue-soft); font-size: 10px; font-weight: 800; }
+    .button-connected { color: var(--lime-ink); border-color: #b7e84f; background: var(--lime); }
+    .onboarding-actions { display: grid; gap: 12px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .onboarding-actions p { margin: 0; }
+    .onboarding-actions strong,
+    .onboarding-actions span { display: block; }
+    .onboarding-actions span { margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .onboarding-actions .button { width: 100%; }
+    .layout-onboarding { display: grid; grid-template-columns: minmax(0, 1.18fr) minmax(360px, .82fr); gap: var(--space-5); align-items: start; }
+    .source-panel,
+    .memory-panel { padding: clamp(18px, 2vw, 26px); }
+    .source-panel .surface-header p,
+    .memory-panel .surface-header p { margin: 0; color: var(--muted); font-size: 12px; }
+    .source-panel .source-list { gap: 10px; }
+    .source-panel .source-row { display: grid; grid-template-columns: minmax(210px, 1.2fr) minmax(170px, .9fr) auto; align-items: center; }
+    .source-identity { min-width: 0; display: flex; align-items: center; gap: 12px; }
+    .source-identity h3,
+    .source-identity p,
+    .source-detail strong,
+    .source-detail span { display: block; margin: 0; }
+    .source-identity p,
+    .source-detail span { margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .source-mark { width: 38px; height: 38px; display: grid; place-items: center; flex: none; border-radius: 10px; color: var(--blue-strong); background: var(--blue-soft); font-size: 9px; font-weight: 800; letter-spacing: .05em; }
+    .source-detail { min-width: 0; }
+    .source-status { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--green); font-size: 12px; font-weight: 650; }
+    .status-dot.is-success,
+    .status-dot.is-active { background: var(--green); }
+    .field { min-width: 0; }
+    .field input,
+    .field select { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--surface); }
+    .field-compact { display: grid; gap: 5px; }
+    .field-label { color: var(--muted); font-size: 10px; font-weight: 650; }
+    .memory-panel { position: sticky; top: 88px; }
+    .memory-statement { margin: 0 0 24px; font-size: clamp(21px, 2.3vw, 29px); font-weight: 600; letter-spacing: -.03em; line-height: 1.58; }
+    .media-fragment { min-height: 46px; margin: 3px 3px 3px 4px; padding: 5px 9px; flex-direction: column; align-items: flex-start; justify-content: center; font-size: 12px; line-height: 1.1; }
+    .media-fragment small { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; font-weight: 600; }
+    .media-fragment-portrait { color: #155d47; background: var(--green-soft); }
+    .media-fragment-product { color: #174c9d; background: var(--blue-soft); }
+    .media-fragment-quote { max-width: 210px; color: #8e3e2f; background: var(--coral-soft); }
+    .media-fragment-quote q { font-weight: 650; }
+    .extraction-summary { padding-top: 20px; border-top: 1px solid var(--line); }
+    .summary-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .summary-heading h3 { margin: 0; }
+    .extraction-summary .metric-row { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 14px 0; }
+    .extraction-summary .metric-row > div { padding: 12px; background: var(--surface); }
+    .extraction-summary dt { color: var(--muted); font-size: 10px; }
+    .extraction-summary dd { margin: 2px 0 0; font-size: 19px; font-weight: 750; }
+    .insight-list { display: grid; gap: 8px; margin: 0; padding-left: 19px; color: var(--ink-soft); font-size: 12px; }
+    .surface-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+
+    /* Research */
+    .research-layout { display: grid; grid-template-columns: 250px minmax(460px, 1fr) 300px; gap: var(--space-4); align-items: start; }
+    .research-questions,
+    .research-notebook,
+    .research-sources { padding: 18px; }
+    .research-questions,
+    .research-sources { position: sticky; top: 88px; }
+    .research-questions .question-list { margin-bottom: 12px; }
+    .research-questions .question-item { align-items: flex-start; flex-direction: column; gap: 4px; }
+    .question-item.is-active { color: var(--ink); border-color: #bcd6ff; background: var(--blue-soft); }
+    .question-status { color: var(--blue-strong); font-size: 10px; font-weight: 750; text-transform: uppercase; }
+    .question-title { font-weight: 650; line-height: 1.35; }
+    .question-meta { color: var(--muted); font-size: 11px; }
+    .notebook-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .notebook-header h2 { margin: 10px 0 6px; }
+    .notebook-header p { margin: 0; color: var(--muted); }
+    .notebook-labels { display: flex; gap: 6px; flex-wrap: wrap; }
+    .notebook-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin: 18px 0; overflow: hidden; border: 1px solid var(--line); border-radius: 11px; background: var(--line); }
+    .summary-stat { padding: 12px 14px; background: var(--surface-subtle); }
+    .summary-stat strong,
+    .summary-stat span { display: block; }
+    .summary-stat strong { font-size: 18px; }
+    .summary-stat span { color: var(--muted); font-size: 10px; }
+    .hypothesis { padding: 22px 0; border-top: 1px solid var(--line); }
+    .hypothesis:first-of-type { border-top: 0; }
+    .hypothesis-header,
+    .hypothesis-footer { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+    .hypothesis-header h3 { margin: 0; font-size: 18px; }
+    .confidence { display: inline-flex; padding: 5px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .confidence-high { color: #0f6f4d; background: var(--green-soft); }
+    .confidence-medium { color: #9a3d2b; background: var(--coral-soft); }
+    .confidence-low { color: var(--amber); background: var(--amber-soft); }
+    .hypothesis-statement { margin: 18px 0; font-size: clamp(19px, 2vw, 25px); font-weight: 600; letter-spacing: -.025em; line-height: 1.5; }
+    .research-notebook .evidence-fragment { min-height: 42px; margin: 2px 3px; padding: 6px 10px; flex-direction: column; justify-content: center; color: #174c9d; background: var(--blue-soft); font-size: 11px; line-height: 1.1; }
+    .fragment-value,
+    .fragment-label { display: block; }
+    .fragment-value { font-size: 15px; font-weight: 800; }
+    .fragment-label { margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .hypothesis .quote { margin: 0 0 14px; }
+    .hypothesis .quote p { margin-bottom: 5px; }
+    .hypothesis .quote footer { color: var(--muted); font-size: 10px; }
+    .hypothesis-footer p { margin: 0; color: var(--ink-soft); }
+    .hypothesis-emerging { padding: 18px; border: 1px dashed #ffbfaf; border-radius: var(--radius-md); background: var(--coral-soft); }
+    .notebook-actions { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 22px; padding: 18px; border-radius: var(--radius-md); background: var(--ink); color: #fff; }
+    .notebook-actions p { margin: 3px 0 0; color: #bfc7d4; font-size: 12px; }
+    .source-filters { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; }
+    .research-sources .source-list { counter-reset: sources; }
+    .research-sources .source-row { padding: 0; }
+    .source-link { width: 100%; padding: 11px; border: 0; color: var(--ink); background: transparent; text-align: left; }
+    .source-link strong,
+    .source-link span { display: block; }
+    .source-link span:last-child { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .source-type { margin-bottom: 3px; color: var(--blue-strong); font-size: 9px; font-weight: 750; text-transform: uppercase; }
+    .source-note { margin-top: 14px; padding: 12px; border-radius: 10px; color: var(--ink-soft); background: var(--surface-subtle); font-size: 11px; }
+    .source-note p { margin-bottom: 5px; }
+    .source-note p:last-child { margin-bottom: 0; }
+
+    /* Campaign dashboard */
+    .filter-bar { display: flex; gap: 10px; margin-bottom: var(--space-4); padding: 10px; }
+    .filter-bar .field-search { flex: 1; }
+    .filter-bar .field:not(.field-search) { width: 190px; }
+    .dashboard-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+    .dashboard-layout > .campaign-list { display: block; padding: 16px; }
+    .campaign-list .section-heading { align-items: center; margin-bottom: 12px; }
+    .campaign-list-items { display: grid; gap: 7px; }
+    .dashboard-layout .campaign-row { justify-content: space-between; }
+    .campaign-row-main { min-width: 0; flex: 1; }
+    .campaign-row-main strong,
+    .campaign-row-main span { display: block; }
+    .campaign-row-meta { margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .chip-testing { color: var(--blue-strong); border-color: #bbd6ff; background: var(--blue-soft); }
+    .chip-review { color: var(--amber); border-color: #f2d9ad; background: var(--amber-soft); }
+    .chip-live { color: var(--green); border-color: #bfe9d8; background: var(--green-soft); }
+    .chip-draft { color: var(--muted); background: var(--surface-subtle); }
+    .chip-testing .status-dot { background: var(--blue); }
+    .chip-review .status-dot { background: var(--amber); }
+    .chip-live .status-dot { background: var(--green); }
+    .chip-draft .status-dot { background: #98a2b3; }
+    .campaign-summary { padding: clamp(18px, 2.5vw, 28px); }
+    .campaign-summary-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+    .campaign-summary-header h2 { margin: 10px 0 5px; font-size: 27px; }
+    .campaign-summary-header p { max-width: 680px; color: var(--muted); }
+    .summary-meta { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; }
+    .mosaic-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 10px; margin: 20px 0; }
+    .mosaic-card { min-width: 0; min-height: 160px; margin: 0; padding: 18px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-subtle); }
+    .mosaic-card h3 { font-size: 18px; }
+    .mosaic-card p:last-child { margin-bottom: 0; }
+    .mosaic-card-product { grid-column: span 5; }
+    .mosaic-card-visual { grid-column: span 7; padding: 0; }
+    .mosaic-card-audience { grid-column: span 4; background: var(--blue-soft); }
+    .mosaic-card-hook { grid-column: span 4; background: var(--coral-soft); }
+    .mosaic-card-channel { grid-column: span 4; }
+    .mosaic-label { margin-bottom: 8px; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+    .evidence-note { margin-top: 18px; color: var(--green); font-size: 10px; font-weight: 700; }
+    .campaign-art { min-height: 132px; background: linear-gradient(160deg, #dfeeff 0 46%, #7cb8f6 46% 57%, #386e5b 57% 100%); }
+    .campaign-art svg { width: 100%; height: 132px; display: block; }
+    .mosaic-card-visual figcaption { padding: 10px 14px; color: var(--muted); font-size: 10px; }
+    .mosaic-card-hook > p:not(.mosaic-label) { font-size: 20px; font-weight: 700; letter-spacing: -.025em; }
+    .mosaic-card-hook cite { color: var(--muted); font-size: 10px; font-style: normal; }
+    .channel-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+    .channel-list li { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; }
+    .channel-list span { color: var(--muted); text-align: right; }
+    .campaign-summary-footer { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); gap: 14px; align-items: stretch; }
+    .campaign-goal { padding: 16px; border-radius: var(--radius-md); color: #fff; background: var(--ink); }
+    .campaign-goal p:last-child { margin: 0; font-weight: 650; }
+    .campaign-summary-footer .metric-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .campaign-summary-footer .metric dt { color: var(--muted); font-size: 10px; }
+    .campaign-summary-footer .metric dd { margin: 3px 0 0; font-size: 17px; font-weight: 750; }
+    .campaign-summary-footer .metric dd span { color: var(--muted); font-size: 9px; font-weight: 500; }
+
+    /* Campaign detail */
+    .breadcrumb ol { display: flex; align-items: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .breadcrumb li + li::before { content: "/"; margin-right: 8px; color: #b0b7c3; }
+    .breadcrumb a { color: var(--blue-strong); text-decoration: none; }
+    .page-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .campaign-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--space-4); align-items: start; }
+    .campaign-story { display: grid; gap: var(--space-4); min-width: 0; }
+    .story-panel,
+    .channel-section,
+    .evaluation-rail { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-sm); }
+    .story-panel,
+    .channel-section { padding: clamp(18px, 2.5vw, 28px); }
+    .story-sentence { margin: 26px 0; font-size: clamp(23px, 2.7vw, 34px); font-weight: 650; letter-spacing: -.035em; line-height: 1.5; }
+    .story-sentence .evidence-fragment { min-height: 52px; margin: 4px; padding: 5px 8px; gap: 8px; color: var(--ink); text-decoration: none; }
+    .fragment-visual { width: 46px; height: 38px; flex: none; border-radius: 7px; background: linear-gradient(155deg, #bce1ff 0 48%, #2f7566 49% 100%); }
+    .fragment-visual-quotes { background: linear-gradient(135deg, #ffddd7, #f47f6b); }
+    .fragment-copy strong,
+    .fragment-copy small { display: block; }
+    .fragment-copy strong { font-size: 12px; }
+    .fragment-copy small { margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .evidence-strip { display: grid; gap: 8px; }
+    .evidence-item { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 13px; border-top: 1px solid var(--line); }
+    .evidence-item:first-child { border-top: 0; }
+    .evidence-index { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; color: var(--blue-strong); background: var(--blue-soft); font-size: 10px; font-weight: 800; }
+    .evidence-item h3,
+    .evidence-item p { margin: 0; }
+    .evidence-item p { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .channel-section .section-heading { margin-bottom: 18px; }
+    .channel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .channel-card { min-width: 0; display: flex; flex-direction: column; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-subtle); }
+    .channel-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .channel-card-header h3 { margin: 0; }
+    .creative-preview { min-height: 190px; margin: 12px 0; padding: 16px; overflow: hidden; border-radius: 11px; background: var(--surface); }
+    .social-preview { position: relative; display: flex; flex-direction: column; justify-content: flex-end; color: #fff; background: linear-gradient(170deg, #b9e3ff 0 43%, #3383bd 44% 63%, #285a4d 64% 100%); }
+    .preview-kicker { margin: 0 0 4px; font-size: 10px; font-weight: 700; }
+    .preview-headline { margin: 0; font-size: 24px; font-weight: 780; letter-spacing: -.035em; line-height: 1.05; }
+    .preview-brand { margin: 8px 0 0; font-size: 10px; }
+    .storyboard { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .storyboard li { display: grid; grid-template-columns: 42px 1fr; gap: 8px; padding: 10px; border-radius: 8px; background: var(--blue-soft); }
+    .storyboard span { color: var(--blue-strong); font-size: 9px; }
+    .storyboard strong { font-size: 11px; }
+    .email-preview p { color: var(--ink-soft); font-size: 11px; }
+    .email-preview .preview-headline { color: var(--ink); font-size: 23px; }
+    .email-preview .button { margin-top: 8px; }
+    .display-preview { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; color: #fff; background: linear-gradient(160deg, #1b93f6 0 49%, #0f477b 50% 100%); }
+    .display-preview .preview-headline { font-size: 21px; }
+    .display-copy p:last-child { margin: 8px 0 0; font-size: 10px; }
+    .channel-rationale { min-height: 48px; color: var(--muted); font-size: 11px; }
+    .channel-card > .button { align-self: flex-start; margin-top: auto; }
+    .evaluation-rail { position: sticky; top: 88px; overflow: hidden; }
+    .evaluation-rail > section,
+    .evaluation-actions { padding: 18px; border-top: 1px solid var(--line); }
+    .evaluation-rail > section:first-child { border-top: 0; }
+    .evaluation-summary { display: grid; grid-template-columns: 88px 1fr; gap: 14px; align-items: center; }
+    .evaluation-summary h2 { margin: 4px 0; font-size: 18px; }
+    .evaluation-summary p:last-child { margin: 0; color: var(--muted); font-size: 11px; }
+    .score-ring { width: 82px; height: 82px; display: grid; place-content: center; border-radius: 50%; background: radial-gradient(circle at center, #fff 55%, transparent 57%), conic-gradient(var(--green) 0 88%, #e7ebf1 88%); text-align: center; }
+    .score-ring strong,
+    .score-ring span { display: block; }
+    .score-ring strong { font-size: 23px; }
+    .score-ring span { color: var(--muted); font-size: 8px; }
+    .rubric { display: grid; gap: 11px; margin: 12px 0 0; }
+    .rubric > div { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 10px; align-items: center; }
+    .rubric dt { color: var(--ink-soft); font-size: 11px; }
+    .rubric dd { display: grid; grid-template-columns: 1fr 22px; gap: 7px; align-items: center; margin: 0; color: var(--muted); font-size: 10px; }
+    meter { width: 100%; height: 8px; accent-color: var(--blue); }
+    .evidence-strength p,
+    .hypothesis-card p { color: var(--muted); font-size: 11px; }
+    .evidence-strength a { color: var(--blue-strong); font-size: 11px; font-weight: 650; }
+    .hypothesis-card { background: var(--coral-soft); }
+    .hypothesis-details { display: grid; gap: 8px; margin: 12px 0 0; }
+    .hypothesis-details > div { display: grid; grid-template-columns: 78px 1fr; gap: 8px; }
+    .hypothesis-details dt { color: #9a3d2b; font-size: 10px; font-weight: 700; }
+    .hypothesis-details dd { margin: 0; font-size: 11px; }
+    .evaluation-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .evaluation-actions p { grid-column: 1 / -1; margin: 2px 0 0; color: var(--muted); font-size: 10px; }
+
+    @media (max-width: 1280px) {
+      .research-layout { grid-template-columns: 220px minmax(420px, 1fr); }
+      .research-sources { position: static; grid-column: 1 / -1; }
+      .research-sources .source-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .campaign-layout { grid-template-columns: minmax(0, 1fr) 310px; }
+    }
+
+    @media (max-width: 1080px) {
+      :root { --sidebar: 196px; }
+      .metric-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .design-grid { grid-template-columns: 1fr; }
+      .layout-onboarding,
+      .onboarding-layout,
+      .dashboard-layout,
+      .campaign-layout { grid-template-columns: 1fr; }
+      .memory-panel,
+      .platform-panel,
+      .evaluation-rail { position: static; }
+      .source-panel .source-row { grid-template-columns: minmax(210px, 1fr) minmax(170px, .8fr) auto; }
+      .dashboard-layout > .campaign-list { max-height: 330px; overflow: auto; }
+      .evaluation-rail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .evaluation-rail > section,
+      .evaluation-actions { border-top: 0; border-left: 1px solid var(--line); }
+      .evaluation-rail > section:nth-child(odd) { border-left: 0; }
+    }
+
+    @media (max-width: 760px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        display: block;
+        padding: 12px;
+        overflow-x: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand { margin-bottom: 10px; }
+      .nav-list { display: flex; width: max-content; }
+      .sidebar .nav-list { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .sidebar .nav-link { min-height: 40px; white-space: normal; }
+      .sidebar > nav + .nav-spacer + nav { margin-top: 4px; }
+      .nav-spacer,
+      .workspace-card { display: none; }
+      .topbar { top: 0; height: 56px; padding: 0 14px; }
+      .search-control { width: min(100%, 420px); }
+      .topbar-actions .icon-button { display: none; }
+      .app-page { padding: 24px 16px 44px; }
+      .page-header { align-items: stretch; flex-direction: column; margin-bottom: 24px; }
+      .page-header > .inline { align-self: stretch; }
+      .page-header .button { flex: 1; }
+      .metric-row,
+      .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stepper-item span:last-child { display: none; }
+      .source-panel .source-row { grid-template-columns: 1fr; align-items: stretch; }
+      .input-grid { grid-template-columns: 1fr; }
+      .campaign-input-row { grid-template-columns: 40px minmax(0, 1fr) auto; }
+      .campaign-input-row > .button { grid-column: 2 / -1; justify-self: start; }
+      .source-panel .source-row > .button,
+      .source-panel .source-row > .source-status { justify-self: start; }
+      .research-layout { grid-template-columns: 1fr; }
+      .research-questions,
+      .research-sources { position: static; }
+      .research-questions .question-list { grid-template-columns: repeat(3, minmax(210px, 1fr)); overflow-x: auto; }
+      .research-sources { grid-column: auto; }
+      .research-sources .source-list { grid-template-columns: 1fr; }
+      .notebook-header,
+      .hypothesis-header,
+      .hypothesis-footer,
+      .notebook-actions,
+      .campaign-summary-header,
+      .campaign-summary-footer { align-items: stretch; flex-direction: column; grid-template-columns: 1fr; }
+      .filter-bar { overflow-x: auto; }
+      .filter-bar .field { min-width: 180px; }
+      .filter-bar .field-search { min-width: 220px; }
+      .mosaic-card-product,
+      .mosaic-card-visual { grid-column: span 12; }
+      .mosaic-card-audience,
+      .mosaic-card-hook,
+      .mosaic-card-channel { grid-column: span 6; }
+      .channel-grid,
+      .evaluation-rail { grid-template-columns: 1fr; }
+      .evaluation-rail > section,
+      .evaluation-rail > section:nth-child(odd),
+      .evaluation-actions { border-left: 0; border-top: 1px solid var(--line); }
+      .evaluation-rail > section:first-child { border-top: 0; }
+    }
+
+    @media (max-width: 420px) {
+      .topbar .search-control span { display: none; }
+      .metric-row,
+      .swatches { grid-template-columns: 1fr; }
+      h1 { font-size: 30px; }
+      .notebook-summary,
+      .extraction-summary .metric-row { grid-template-columns: 1fr; }
+      .mosaic-card-audience,
+      .mosaic-card-hook,
+      .mosaic-card-channel { grid-column: span 12; }
+      .evidence-item { grid-template-columns: 32px minmax(0, 1fr); }
+      .evidence-item .chip { grid-column: 2; justify-self: start; }
+      .story-sentence { font-size: 21px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <svg class="sr-only" aria-hidden="true" focusable="false">
+    <symbol id="icon-camp" viewBox="0 0 24 24"><path d="M4 17V7l5 5 3-7 3 7 5-5v10"/><path d="M4 17h16"/></symbol>
+    <symbol id="icon-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="icon-research" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m14.5 14.5 5 5"/><path d="M10 7v6M7 10h6"/></symbol>
+    <symbol id="icon-campaign" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></symbol>
+    <symbol id="icon-spark" viewBox="0 0 24 24"><path d="m12 3 1.4 4.6L18 9l-4.6 1.4L12 15l-1.4-4.6L6 9l4.6-1.4z"/><path d="m18 15 .8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/></symbol>
+    <symbol id="icon-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/></symbol>
+    <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"/></symbol>
+    <symbol id="icon-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.1-1.1"/></symbol>
+    <symbol id="icon-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M5 20h14"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1z"/></symbol>
+    <symbol id="scene-coast" viewBox="0 0 120 72"><rect width="120" height="72" fill="#dcebff"/><rect y="42" width="120" height="30" fill="#1f78c7"/><circle cx="94" cy="17" r="8" fill="#ffd99b"/><path d="M0 48 34 18l28 28 22-20 36 33v13H0z" fill="#276b61"/><path d="M0 57c20-8 31-8 48 0s30 8 72-4v19H0z" fill="#e8d4a5"/></symbol>
+    <symbol id="scene-person" viewBox="0 0 120 72"><rect width="120" height="72" fill="#e7f1ff"/><rect y="48" width="120" height="24" fill="#b7d8aa"/><circle cx="76" cy="23" r="10" fill="#d69772"/><path d="M59 68c1-23 6-34 17-34s18 13 21 34" fill="#144d6f"/><path d="M0 49 32 22l27 27" fill="#4e8066"/></symbol>
+    <symbol id="scene-product" viewBox="0 0 120 72"><rect width="120" height="72" fill="#eef2f7"/><ellipse cx="60" cy="60" rx="34" ry="6" fill="#d7dde6"/><path d="M47 14h26l5 44H42z" fill="#fff" stroke="#90a8c5"/><path d="M49 29h24" stroke="#1677ff" stroke-width="4"/><path d="M53 39h16" stroke="#f47f6b" stroke-width="3"/></symbol>
+  </svg>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#icon-camp"></use></svg></span>Campco</div>
+      <nav>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="#onboarding" data-route="onboarding"><svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>Onboarding</a></li>
+          <li><a class="nav-link" href="#research" data-route="research"><svg class="icon" aria-hidden="true"><use href="#icon-research"></use></svg>Research</a></li>
+          <li><a class="nav-link" href="#dashboard" data-route="dashboard"><svg class="icon" aria-hidden="true"><use href="#icon-grid"></use></svg>Campaigns</a></li>
+          <li><a class="nav-link" href="#campaign" data-route="campaign"><svg class="icon" aria-hidden="true"><use href="#icon-campaign"></use></svg>Campaign detail</a></li>
+        </ul>
+      </nav>
+      <div class="nav-spacer"></div>
+      <nav aria-label="Prototype navigation">
+        <ul class="nav-list">
+          <li><a class="nav-link" href="#design" data-route="design"><svg class="icon" aria-hidden="true"><use href="#icon-spark"></use></svg>Design system</a></li>
+        </ul>
+      </nav>
+      <div class="workspace-card"><strong>Acme Growth</strong><span>Campco prototype</span></div>
+    </aside>
+
+    <div class="main-shell">
+      <header class="topbar">
+        <label class="search-control">
+          <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+          <span class="sr-only">Search Campco</span>
+          <input type="search" placeholder="Search campaigns, research, or assets">
+        </label>
+        <div class="topbar-actions">
+          <button class="icon-button" type="button" aria-label="Notifications"><svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg></button>
+          <span class="avatar" aria-label="Jamie Davis">JD</span>
+        </div>
+      </header>
+
+      <main id="main-content">
+<section class="app-page" data-page="onboarding" id="page-onboarding" aria-labelledby="onboarding-title">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Company setup</p>
+      <h1 id="onboarding-title">Give Campco the raw material.</h1>
+      <p>Add the company context, campaigns, and channels Campco should use when it generates new work. You can be structured or simply paste what you know.</p>
+    </div>
+    <button class="button" type="button">Save and finish later</button>
+  </header>
+
+  <nav class="stepper" aria-label="Onboarding progress">
+    <ol>
+      <li class="stepper-item is-current" aria-current="step">
+        <span class="stepper-number" aria-hidden="true">01</span>
+        <span>Company media</span>
+      </li>
+      <li class="stepper-item">
+        <span class="stepper-number" aria-hidden="true">02</span>
+        <span>Campaigns</span>
+      </li>
+      <li class="stepper-item">
+        <span class="stepper-number" aria-hidden="true">03</span>
+        <span>Platforms</span>
+      </li>
+    </ol>
+  </nav>
+
+  <div class="onboarding-layout">
+    <div class="setup-main">
+      <section class="surface setup-section" aria-labelledby="media-title">
+        <header class="surface-header">
+          <div class="section-title">
+            <span class="section-number" aria-hidden="true">1</span>
+            <div>
+              <p class="eyebrow">Company media</p>
+              <h2 id="media-title">Everything Campco can learn from</h2>
+            </div>
+          </div>
+          <span class="chip chip-lime"><span class="status-dot live"></span>3 sources added</span>
+        </header>
+
+        <div class="input-grid">
+          <label class="form-control">
+            <span>Company website</span>
+            <span class="input-with-action">
+              <input class="input" type="url" value="https://fieldnote.co" aria-label="Company website">
+              <button class="button button-small" type="button">Import</button>
+            </span>
+          </label>
+
+          <button class="upload-zone" type="button">
+            <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+            <span><strong>Upload company media</strong><small>Brand docs, product images, videos, reviews, or past ads</small></span>
+          </button>
+        </div>
+
+        <div class="attachment-row" aria-label="Added company media">
+          <span class="attachment-chip"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg>Brand guide.pdf</span>
+          <span class="attachment-chip"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg>Product shots <small>14</small></span>
+          <span class="attachment-chip"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg>Customer reviews.csv</span>
+        </div>
+
+        <label class="form-control context-field">
+          <span>Anything else Campco should know?</span>
+          <textarea class="textarea context-textarea" placeholder="Paste a product description, audience notes, brand voice, customer language, a campaign goal, or anything else the model should understand.">We help small operations teams replace scattered updates with one calm weekly plan. Our customers care more about clarity and reliability than complicated automation. Keep the voice direct, confident, and human.</textarea>
+          <small>This is passed to the campaign model as company context. Plain language is perfect.</small>
+        </label>
+      </section>
+
+      <section class="surface setup-section" aria-labelledby="campaign-input-title">
+        <header class="surface-header">
+          <div class="section-title">
+            <span class="section-number" aria-hidden="true">2</span>
+            <div>
+              <p class="eyebrow">Campaign list</p>
+              <h2 id="campaign-input-title">Show Campco what you have run</h2>
+            </div>
+          </div>
+          <button class="button button-small" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>Add campaign</button>
+        </header>
+
+        <div class="campaign-input-list">
+          <article class="campaign-input-row">
+            <span class="campaign-thumb campaign-thumb-blue" aria-hidden="true"></span>
+            <div class="row-copy"><strong>Quiet Confidence</strong><span>Spring product launch / 18 assets</span></div>
+            <span class="chip chip-green"><span class="status-dot live"></span>Live</span>
+            <button class="button button-quiet button-small" type="button">Edit</button>
+          </article>
+          <article class="campaign-input-row">
+            <span class="campaign-thumb campaign-thumb-coral" aria-hidden="true"></span>
+            <div class="row-copy"><strong>Work Without Friction</strong><span>Acquisition / 12 assets</span></div>
+            <span class="chip chip-active"><span class="status-dot testing"></span>Testing</span>
+            <button class="button button-quiet button-small" type="button">Edit</button>
+          </article>
+          <article class="campaign-input-row">
+            <span class="campaign-thumb campaign-thumb-ink" aria-hidden="true"></span>
+            <div class="row-copy"><strong>Founder's Notes</strong><span>Organic social / 7 posts</span></div>
+            <span class="chip"><span class="status-dot draft"></span>Draft</span>
+            <button class="button button-quiet button-small" type="button">Edit</button>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <aside class="surface setup-section platform-panel" aria-labelledby="platform-title">
+      <header class="surface-header">
+        <div class="section-title">
+          <span class="section-number" aria-hidden="true">3</span>
+          <div>
+            <p class="eyebrow">Platforms</p>
+            <h2 id="platform-title">Connect where you publish</h2>
+          </div>
+        </div>
+      </header>
+
+      <p class="muted">Connected channels give Campco format constraints and past performance context. Nothing publishes automatically.</p>
+
+      <div class="platform-list">
+        <div class="platform-row is-connected">
+          <span class="platform-mark">M</span>
+          <div class="row-copy"><strong>Meta Ads</strong><span>2 ad accounts</span></div>
+          <button class="button button-small button-connected" type="button" data-toggle-label="Connect">Connected</button>
+        </div>
+        <div class="platform-row">
+          <span class="platform-mark">TT</span>
+          <div class="row-copy"><strong>TikTok</strong><span>Creative and performance</span></div>
+          <button class="button button-small" type="button" data-toggle-label="Connected">Connect</button>
+        </div>
+        <div class="platform-row is-connected">
+          <span class="platform-mark">IG</span>
+          <div class="row-copy"><strong>Instagram</strong><span>@fieldnote</span></div>
+          <button class="button button-small button-connected" type="button" data-toggle-label="Connect">Connected</button>
+        </div>
+        <div class="platform-row">
+          <span class="platform-mark">IN</span>
+          <div class="row-copy"><strong>LinkedIn</strong><span>Organic and paid</span></div>
+          <button class="button button-small" type="button" data-toggle-label="Connected">Connect</button>
+        </div>
+        <div class="platform-row">
+          <span class="platform-mark">YT</span>
+          <div class="row-copy"><strong>YouTube</strong><span>Video library</span></div>
+          <button class="button button-small" type="button" data-toggle-label="Connected">Connect</button>
+        </div>
+        <div class="platform-row is-connected">
+          <span class="platform-mark">@</span>
+          <div class="row-copy"><strong>Email</strong><span>4,218 subscribers</span></div>
+          <button class="button button-small button-connected" type="button" data-toggle-label="Connect">Connected</button>
+        </div>
+      </div>
+
+      <footer class="onboarding-actions">
+        <p><strong>Enough to start.</strong><span>You can add or change any source later.</span></p>
+        <button class="button button-primary" type="button" data-go="research">Continue to research<svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg></button>
+      </footer>
+    </aside>
+  </div>
+</section>
+        <section class="app-page" data-page="research" id="page-research" aria-labelledby="research-title" hidden>
+  <header class="page-header">
+    <div class="page-header-copy">
+      <p class="eyebrow">Research sandbox</p>
+      <h1 id="research-title">Turn evidence into campaign angles</h1>
+      <p>Collect market signals, test a point of view, and keep every claim traceable.</p>
+    </div>
+    <button class="button button-primary" type="button" data-action="new-research">New research</button>
+  </header>
+
+  <div class="research-layout">
+    <aside class="surface research-questions" aria-labelledby="questions-title">
+      <header class="surface-header">
+        <div>
+          <p class="eyebrow">Workspace</p>
+          <h2 id="questions-title">Research questions</h2>
+        </div>
+        <span class="count" aria-label="3 research questions">3</span>
+      </header>
+
+      <nav class="question-list" aria-label="Research questions">
+        <button class="question-item is-active is-selected" type="button" aria-current="page" data-select-group="research-questions">
+          <span class="question-status">Synthesized</span>
+          <span class="question-title">Why are trial users abandoning setup?</span>
+          <span class="question-meta">18 sources</span>
+        </button>
+        <button class="question-item" type="button" data-select-group="research-questions">
+          <span class="question-status">Collecting</span>
+          <span class="question-title">Which promise resonates with lean teams?</span>
+          <span class="question-meta">11 sources</span>
+        </button>
+        <button class="question-item" type="button" data-select-group="research-questions">
+          <span class="question-status">Draft</span>
+          <span class="question-title">How do buyers describe campaign fatigue?</span>
+          <span class="question-meta">No sources yet</span>
+        </button>
+      </nav>
+
+      <button class="button button-secondary button-full" type="button" data-action="add-question">Add question</button>
+    </aside>
+
+    <section class="surface research-notebook" aria-labelledby="notebook-title">
+      <header class="notebook-header">
+        <div>
+          <div class="notebook-labels">
+            <span class="chip">Onboarding</span>
+            <span class="chip">B2B SaaS</span>
+          </div>
+          <h2 id="notebook-title">Why are trial users abandoning setup?</h2>
+          <p>Campco synthesis from customer language, competitor creative, and product behavior.</p>
+        </div>
+        <button class="button button-quiet" type="button" data-action="edit-question">Edit question</button>
+      </header>
+
+      <div class="notebook-summary" aria-label="Research summary">
+        <div class="summary-stat">
+          <strong>18</strong>
+          <span>sources reviewed</span>
+        </div>
+        <div class="summary-stat">
+          <strong>42</strong>
+          <span>signals clustered</span>
+        </div>
+        <div class="summary-stat">
+          <strong>3</strong>
+          <span>angles worth testing</span>
+        </div>
+      </div>
+
+      <section class="hypothesis" aria-labelledby="hypothesis-one-title">
+        <header class="hypothesis-header">
+          <div>
+            <p class="eyebrow">Hypothesis 01</p>
+            <h3 id="hypothesis-one-title">The empty-canvas problem</h3>
+          </div>
+          <span class="confidence confidence-high">High confidence</span>
+        </header>
+
+        <p class="hypothesis-statement">
+          Teams are not resisting automation. They are leaving when setup feels like
+          <span class="evidence-fragment evidence-fragment-quote" role="img" aria-label="Customer quote: another blank brief to fill out">
+            another blank brief to fill out
+          </span>
+          before Campco demonstrates value.
+        </p>
+
+        <blockquote class="quote">
+          <p>“I wanted a useful first draft, but the tool asked me to explain our whole company again.”</p>
+          <footer>Trial exit interview, operations lead</footer>
+        </blockquote>
+
+        <div class="hypothesis-footer">
+          <p><strong>Campaign angle:</strong> Show the first campaign appearing from existing company media, before asking for refinements.</p>
+          <button class="button button-secondary" type="button" data-action="open-evidence" aria-label="Open 7 sources for the empty-canvas hypothesis">View 7 sources</button>
+        </div>
+      </section>
+
+      <section class="hypothesis" aria-labelledby="hypothesis-two-title">
+        <header class="hypothesis-header">
+          <div>
+            <p class="eyebrow">Hypothesis 02</p>
+            <h3 id="hypothesis-two-title">Proof beats feature volume</h3>
+          </div>
+          <span class="confidence confidence-medium">Medium confidence</span>
+        </header>
+
+        <p class="hypothesis-statement">
+          Buyers engage longer when campaign examples lead with a measurable outcome. In the reviewed ads,
+          <span class="evidence-fragment evidence-fragment-chart" role="img" aria-label="Mini bar chart showing outcome-led ads at 68 percent and feature-led ads at 31 percent">
+            <span class="fragment-value">2.2x</span>
+            <span class="fragment-label">longer watch time</span>
+          </span>
+          came from outcome-led creative rather than feature tours.
+        </p>
+
+        <blockquote class="quote">
+          <p>“Do not tell me it makes content faster. Show me the week of work it replaced.”</p>
+          <footer>Reddit discussion, growth marketing community</footer>
+        </blockquote>
+
+        <div class="hypothesis-footer">
+          <p><strong>Campaign angle:</strong> Lead with a before-and-after campaign timeline, then reveal the workflow behind it.</p>
+          <button class="button button-secondary" type="button" data-action="open-evidence" aria-label="Open 6 sources for the proof hypothesis">View 6 sources</button>
+        </div>
+      </section>
+
+      <section class="hypothesis hypothesis-emerging" aria-labelledby="hypothesis-three-title">
+        <header class="hypothesis-header">
+          <div>
+            <p class="eyebrow">Emerging signal</p>
+            <h3 id="hypothesis-three-title">Control is part of the promise</h3>
+          </div>
+          <span class="confidence confidence-low">Needs evidence</span>
+        </header>
+        <p>Several teams want AI speed, but still expect a visible approval point before assets leave the workspace.</p>
+        <button class="button button-quiet" type="button" data-action="investigate-signal">Investigate this signal</button>
+      </section>
+
+      <footer class="notebook-actions">
+        <div>
+          <strong>Ready to shape the campaign?</strong>
+          <p>Carry the selected hypotheses and their citations into a new campaign brief.</p>
+        </div>
+        <button class="button button-primary" type="button" data-go="dashboard">Promote to campaign</button>
+      </footer>
+    </section>
+
+    <aside class="surface research-sources" aria-labelledby="sources-title">
+      <header class="surface-header">
+        <div>
+          <p class="eyebrow">Evidence</p>
+          <h2 id="sources-title">Sources and citations</h2>
+        </div>
+        <button class="button button-quiet" type="button" data-action="add-source">Add source</button>
+      </header>
+
+      <div class="source-filters" role="group" aria-label="Filter sources">
+        <button class="chip is-active" type="button" aria-pressed="true">All 18</button>
+        <button class="chip" type="button" aria-pressed="false">Customer 9</button>
+        <button class="chip" type="button" aria-pressed="false">Market 5</button>
+        <button class="chip" type="button" aria-pressed="false">Creative 4</button>
+      </div>
+
+      <ol class="source-list">
+        <li class="source-row" id="source-interviews-1">
+          <button type="button" class="source-link" data-action="inspect-source">
+            <span class="source-type">Customer interview</span>
+            <strong>Trial exit interviews</strong>
+            <span>4 notes cited in hypothesis 01</span>
+          </button>
+        </li>
+        <li class="source-row" id="source-session-1">
+          <button type="button" class="source-link" data-action="inspect-source">
+            <span class="source-type">Product behavior</span>
+            <strong>First-session drop-off</strong>
+            <span>61% leave before adding brand context</span>
+          </button>
+        </li>
+        <li class="source-row" id="source-reddit-1">
+          <button type="button" class="source-link" data-action="inspect-source">
+            <span class="source-type">Community</span>
+            <strong>Growth marketing discussion</strong>
+            <span>8 buyer phrases, 2 claims cited</span>
+          </button>
+        </li>
+        <li class="source-row" id="source-creative-1">
+          <button type="button" class="source-link" data-action="inspect-source">
+            <span class="source-type">Competitor creative</span>
+            <strong>Outcome-led ad set</strong>
+            <span>12 ads compared across 4 brands</span>
+          </button>
+        </li>
+        <li class="source-row" id="source-reviews-1">
+          <button type="button" class="source-link" data-action="inspect-source">
+            <span class="source-type">Reviews</span>
+            <strong>Workflow software reviews</strong>
+            <span>Approval language appears in 7 reviews</span>
+          </button>
+        </li>
+      </ol>
+
+      <div class="source-note">
+        <p><strong>Citation coverage</strong></p>
+        <p>Two hypotheses have direct support. One emerging signal still needs corroboration.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+        <section class="app-page" data-page="dashboard" id="page-dashboard" aria-labelledby="dashboard-title" hidden>
+  <header class="page-header">
+    <div class="page-header-copy">
+      <p class="eyebrow">Campco workspace</p>
+      <h1 id="dashboard-title">Campaigns</h1>
+      <p class="page-description">Choose a campaign to review its direction, evidence, and next decision.</p>
+    </div>
+    <button class="button button-primary" type="button" data-action="new-campaign">New campaign</button>
+  </header>
+
+  <form class="filter-bar surface" aria-label="Filter campaigns">
+    <div class="field field-search">
+      <label class="visually-hidden" for="campaign-search">Search campaigns</label>
+      <input id="campaign-search" name="query" type="search" placeholder="Search campaigns">
+    </div>
+
+    <div class="field">
+      <label class="visually-hidden" for="campaign-status">Status</label>
+      <select id="campaign-status" name="status">
+        <option value="all">All statuses</option>
+        <option value="draft">Draft</option>
+        <option value="review">Review</option>
+        <option value="testing">Testing</option>
+        <option value="live">Live</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="visually-hidden" for="campaign-platform">Platform</label>
+      <select id="campaign-platform" name="platform">
+        <option value="all">All platforms</option>
+        <option value="meta">Meta</option>
+        <option value="tiktok">TikTok</option>
+        <option value="linkedin">LinkedIn</option>
+        <option value="email">Email</option>
+      </select>
+    </div>
+  </form>
+
+  <div class="dashboard-layout">
+    <aside class="campaign-list surface" aria-labelledby="campaign-list-title">
+      <div class="section-heading">
+        <h2 id="campaign-list-title">All campaigns</h2>
+        <span class="count" aria-label="6 campaigns">6</span>
+      </div>
+
+      <div class="campaign-list-items" role="list">
+        <button class="campaign-row is-selected" type="button" aria-pressed="true" data-campaign="quiet-confidence" data-select-group="campaign-list">
+          <span class="campaign-row-main">
+            <strong>Quiet Confidence</strong>
+            <span class="campaign-row-meta">Spring product launch</span>
+          </span>
+          <span class="chip chip-testing"><span class="status-dot" aria-hidden="true"></span>Testing</span>
+        </button>
+
+        <button class="campaign-row" type="button" aria-pressed="false" data-campaign="work-without-friction" data-select-group="campaign-list">
+          <span class="campaign-row-main">
+            <strong>Work Without Friction</strong>
+            <span class="campaign-row-meta">Small business acquisition</span>
+          </span>
+          <span class="chip chip-review"><span class="status-dot" aria-hidden="true"></span>Review</span>
+        </button>
+
+        <button class="campaign-row" type="button" aria-pressed="false" data-campaign="proof-in-practice" data-select-group="campaign-list">
+          <span class="campaign-row-main">
+            <strong>Proof in Practice</strong>
+            <span class="campaign-row-meta">Customer story series</span>
+          </span>
+          <span class="chip chip-live"><span class="status-dot" aria-hidden="true"></span>Live</span>
+        </button>
+
+        <button class="campaign-row" type="button" aria-pressed="false" data-campaign="summer-starter" data-select-group="campaign-list">
+          <span class="campaign-row-main">
+            <strong>Summer Starter</strong>
+            <span class="campaign-row-meta">Seasonal offer</span>
+          </span>
+          <span class="chip chip-draft"><span class="status-dot" aria-hidden="true"></span>Draft</span>
+        </button>
+
+        <button class="campaign-row" type="button" aria-pressed="false" data-campaign="switch-week" data-select-group="campaign-list">
+          <span class="campaign-row-main">
+            <strong>Switch Week</strong>
+            <span class="campaign-row-meta">Competitor conversion</span>
+          </span>
+          <span class="chip chip-testing"><span class="status-dot" aria-hidden="true"></span>Testing</span>
+        </button>
+
+        <button class="campaign-row" type="button" aria-pressed="false" data-campaign="founders-note" data-select-group="campaign-list">
+          <span class="campaign-row-main">
+            <strong>A Note from the Founders</strong>
+            <span class="campaign-row-meta">Brand trust</span>
+          </span>
+          <span class="chip chip-draft"><span class="status-dot" aria-hidden="true"></span>Draft</span>
+        </button>
+      </div>
+    </aside>
+
+    <article class="campaign-summary surface" aria-labelledby="selected-campaign-title">
+      <header class="campaign-summary-header">
+        <div>
+          <div class="summary-meta">
+            <span class="chip chip-testing"><span class="status-dot" aria-hidden="true"></span>Testing</span>
+            <span>Updated today</span>
+          </div>
+          <h2 id="selected-campaign-title">Quiet Confidence</h2>
+          <p>Turn product reliability into a clear, human reason for independent teams to switch.</p>
+        </div>
+        <button class="button button-primary" type="button" data-go="campaign">Open campaign</button>
+      </header>
+
+      <div class="mosaic-grid" aria-label="Campaign direction">
+        <section class="mosaic-card mosaic-card-product">
+          <p class="mosaic-label">Product truth</p>
+          <h3>Built to stay out of the way</h3>
+          <p>Fast setup, dependable daily use, and no extra process for a small team to maintain.</p>
+          <div class="evidence-note">Repeated across 18 customer interviews</div>
+        </section>
+
+        <figure class="mosaic-card mosaic-card-visual">
+          <div class="campaign-art campaign-art-product" role="img" aria-label="Campaign art direction showing a focused workspace against an open blue sky"><svg aria-hidden="true" viewBox="0 0 120 72" preserveAspectRatio="xMidYMid slice"><use href="#scene-coast"></use></svg></div>
+          <figcaption>Open space, real work, restrained product detail.</figcaption>
+        </figure>
+
+        <section class="mosaic-card mosaic-card-audience">
+          <p class="mosaic-label">Audience</p>
+          <h3>Independent teams of 5 to 30</h3>
+          <p>Owners and operators who value reliability more than another elaborate toolkit.</p>
+        </section>
+
+        <blockquote class="mosaic-card mosaic-card-hook">
+          <p class="mosaic-label">Lead hook</p>
+          <p>"The tool your team stops thinking about."</p>
+          <cite>Selected from 7 evidence-backed directions</cite>
+        </blockquote>
+
+        <section class="mosaic-card mosaic-card-channel">
+          <p class="mosaic-label">Channel plan</p>
+          <h3>Start focused</h3>
+          <ul class="channel-list">
+            <li><strong>LinkedIn</strong><span>Founder-led proof</span></li>
+            <li><strong>Meta</strong><span>Customer problem and payoff</span></li>
+            <li><strong>Email</strong><span>Switching story</span></li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="campaign-summary-footer">
+        <section class="campaign-goal" aria-labelledby="campaign-goal-title">
+          <p class="mosaic-label" id="campaign-goal-title">Campaign goal</p>
+          <p>Generate 240 qualified trials from owner-led teams by October 18.</p>
+        </section>
+
+        <dl class="metric-row">
+          <div class="metric">
+            <dt>Qualified trials</dt>
+            <dd>86 <span>of 240</span></dd>
+          </div>
+          <div class="metric">
+            <dt>Cost per trial</dt>
+            <dd>$31 <span>target $38</span></dd>
+          </div>
+          <div class="metric">
+            <dt>Next decision</dt>
+            <dd>2 days <span>after test readout</span></dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+  </div>
+</section>
+
+        <section class="app-page" data-page="campaign" id="page-campaign" aria-labelledby="campaign-title" hidden>
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="#dashboard" data-route="dashboard">Campaigns</a></li>
+      <li aria-current="page">Quiet Confidence</li>
+    </ol>
+  </nav>
+
+  <header class="page-header">
+    <div class="page-header-copy">
+      <p class="eyebrow">Fieldnote / Spring product launch</p>
+      <h1 id="campaign-title">Quiet Confidence</h1>
+      <p>A focused campaign built from the clearest customer tension: planning should create clarity, not more process to maintain.</p>
+    </div>
+    <div class="page-header-actions">
+      <span class="chip" data-campaign-status><span class="status-dot review" aria-hidden="true"></span>Ready for review</span>
+      <button class="button" type="button">Share preview</button>
+    </div>
+  </header>
+
+  <div class="campaign-layout">
+    <div class="campaign-story">
+      <section class="story-panel" aria-labelledby="campaign-concept-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Campaign concept</p>
+            <h2 id="campaign-concept-title">One idea, carried through every channel</h2>
+          </div>
+          <span class="chip">Concept 02 of 03</span>
+        </div>
+
+        <p class="story-sentence">
+          For operations leads who call Monday their
+          <span class="fragment-pair"><a class="evidence-fragment" href="#evidence-lost-hour" aria-label="View evidence for reset day">
+            <span class="fragment-visual fragment-visual-quotes" aria-hidden="true"></span>
+            <span class="fragment-copy"><strong>reset day</strong><small>46 customer quotes</small></span>
+          </a>,</span> Fieldnote makes the week feel
+          <a class="evidence-fragment" href="#evidence-wide-open" aria-label="View evidence for wide open">
+            <svg class="fragment-visual fragment-visual-sky" aria-hidden="true" viewBox="0 0 120 72" preserveAspectRatio="xMidYMid slice"><use href="#scene-coast"></use></svg>
+            <span class="fragment-copy"><strong>calm and visible</strong><small>Top-performing visual cue</small></span>
+          </a>
+          without adding another system to manage.
+        </p>
+
+        <div class="evidence-strip" aria-label="Evidence supporting this campaign concept">
+          <article class="evidence-item" id="evidence-lost-hour">
+            <span class="evidence-index">E1</span>
+            <div>
+              <h3>Monday fragmentation is the shared tension</h3>
+              <p>"Reset," "scattered," and "catch up" appeared in 68% of relevant reviews and interviews.</p>
+            </div>
+            <span class="chip">High confidence</span>
+          </article>
+          <article class="evidence-item" id="evidence-wide-open">
+            <span class="evidence-index">E2</span>
+            <div>
+              <h3>Calm, spacious creative earns attention</h3>
+              <p>Simple visual systems held attention 1.7 times longer than dense feature-led creative.</p>
+            </div>
+            <span class="chip">Behavioral signal</span>
+          </article>
+          <article class="evidence-item" id="evidence-evening">
+            <span class="evidence-index">E3</span>
+            <div>
+              <h3>Setup burden blocks conversion</h3>
+              <p>Fear of maintaining another workflow was the most common reason interested buyers did not try the product.</p>
+            </div>
+            <span class="chip">Purchase barrier</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="channel-section" aria-labelledby="channel-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Creative system</p>
+            <h2 id="channel-title">The same promise, native to each channel</h2>
+          </div>
+          <button class="button" type="button">Open all assets</button>
+        </div>
+
+        <div class="channel-grid">
+          <article class="channel-card channel-card-social">
+            <header class="channel-card-header">
+              <div>
+                <p class="eyebrow">Social</p>
+                <h3>Carousel / 4 frames</h3>
+              </div>
+              <span class="chip">E1 + E2</span>
+            </header>
+            <div class="creative-preview social-preview" aria-label="Social creative preview">
+              <div class="preview-sky" aria-hidden="true"></div>
+              <p class="preview-kicker">Monday / 9:04 AM</p>
+              <p class="preview-headline">The reset your team actually keeps.</p>
+              <p class="preview-brand">Fieldnote</p>
+            </div>
+            <p class="channel-rationale">Turns the audience's exact time-and-feeling language into a moment of possibility.</p>
+            <button class="button button-quiet" type="button">Review social</button>
+          </article>
+
+          <article class="channel-card channel-card-video">
+            <header class="channel-card-header">
+              <div>
+                <p class="eyebrow">Video</p>
+                <h3>Vertical / 15 seconds</h3>
+              </div>
+              <span class="chip">E2 + E3</span>
+            </header>
+            <div class="creative-preview video-preview" aria-label="Video storyboard preview">
+              <ol class="storyboard">
+                <li><span>00:00</span><strong>Updates arrive from everywhere.</strong></li>
+                <li><span>00:04</span><strong>One plan comes into focus.</strong></li>
+                <li><span>00:10</span><strong>Start the week with quiet confidence.</strong></li>
+              </ol>
+            </div>
+            <p class="channel-rationale">Contrasts the familiar slump with a bright release, while resolving the sleep concern in the final beat.</p>
+            <button class="button button-quiet" type="button">Review video</button>
+          </article>
+
+          <article class="channel-card channel-card-email">
+            <header class="channel-card-header">
+              <div>
+                <p class="eyebrow">Email</p>
+                <h3>Launch / Existing customers</h3>
+              </div>
+              <span class="chip">E1 + E3</span>
+            </header>
+            <div class="creative-preview email-preview" aria-label="Email creative preview">
+              <p><strong>Subject:</strong> A calmer Monday</p>
+              <p class="preview-headline">Quiet Confidence.</p>
+              <p>Bring every update into one shared weekly plan, without adding another reporting ritual.</p>
+              <span class="button button-primary" aria-hidden="true">Meet Fieldnote</span>
+            </div>
+            <p class="channel-rationale">Leads with a recognizable moment, then answers the primary barrier before asking for the click.</p>
+            <button class="button button-quiet" type="button">Review email</button>
+          </article>
+
+          <article class="channel-card channel-card-display">
+            <header class="channel-card-header">
+              <div>
+                <p class="eyebrow">Display</p>
+                <h3>Responsive / Prospecting</h3>
+              </div>
+              <span class="chip">E2</span>
+            </header>
+            <div class="creative-preview display-preview" aria-label="Display advertisement preview">
+              <div class="display-copy">
+                <p class="preview-headline">Make the week visible.</p>
+                <p>Fieldnote</p>
+              </div>
+              <span class="button button-primary" aria-hidden="true">Try Drift</span>
+            </div>
+            <p class="channel-rationale">Keeps the smallest format visual and memorable, using the strongest attention cue without extra claims.</p>
+            <button class="button button-quiet" type="button">Review display</button>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <aside class="evaluation-rail" aria-labelledby="jev-title">
+      <section class="evaluation-summary">
+        <div class="score-ring" role="img" aria-label="Jev campaign score: 88 out of 100">
+          <strong>88</strong>
+          <span>out of 100</span>
+        </div>
+        <div>
+          <p class="eyebrow">Jev review</p>
+          <h2 id="jev-title">Strong, differentiated concept</h2>
+          <p>The promise is specific enough to own and flexible enough to carry across channels.</p>
+        </div>
+      </section>
+
+      <section class="rubric-section" aria-labelledby="rubric-title">
+        <h3 id="rubric-title">Rubric</h3>
+        <dl class="rubric">
+          <div>
+            <dt>Audience fit</dt>
+            <dd><meter min="0" max="100" value="94">94 out of 100</meter><span>94</span></dd>
+          </div>
+          <div>
+            <dt>Evidence</dt>
+            <dd><meter min="0" max="100" value="91">91 out of 100</meter><span>91</span></dd>
+          </div>
+          <div>
+            <dt>Differentiation</dt>
+            <dd><meter min="0" max="100" value="86">86 out of 100</meter><span>86</span></dd>
+          </div>
+          <div>
+            <dt>Channel fit</dt>
+            <dd><meter min="0" max="100" value="84">84 out of 100</meter><span>84</span></dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="evidence-strength" aria-labelledby="evidence-strength-title">
+        <div class="section-heading compact">
+          <h3 id="evidence-strength-title">Evidence strength</h3>
+          <span class="chip"><span class="status-dot" aria-hidden="true"></span>Strong</span>
+        </div>
+        <p>Three independent signals support the core promise. The time-saving claim still needs review before publishing.</p>
+        <a href="#evidence-lost-hour">Review source trail</a>
+      </section>
+
+      <section class="hypothesis-card" aria-labelledby="hypothesis-title">
+        <p class="eyebrow">A/B hypothesis</p>
+        <h3 id="hypothesis-title">Does calm outperform speed?</h3>
+        <p>Creative that frames planning as a calm weekly reset will improve qualified clicks over creative that promises faster output.</p>
+        <dl class="hypothesis-details">
+          <div><dt>Variant A</dt><dd>"The Monday reset you actually keep."</dd></div>
+          <div><dt>Variant B</dt><dd>"Plan your week in ten minutes."</dd></div>
+          <div><dt>Primary metric</dt><dd>Qualified landing-page visits</dd></div>
+        </dl>
+      </section>
+
+      <div class="evaluation-actions">
+        <button class="button button-primary" type="button" data-approve>Approve campaign</button>
+        <button class="button" type="button">Revise campaign</button>
+        <p>Approval moves these four assets into final production. Nothing publishes automatically.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+        <!-- PAGE_FRAGMENTS -->
+
+        <section class="app-page" data-page="design" id="page-design" hidden>
+          <header class="page-header">
+            <div><p class="eyebrow">Reference</p><h1>Campco design system</h1><p>A restrained evidence-first system. Visual fragments are used only when they connect research to a campaign decision.</p></div>
+          </header>
+
+          <div class="design-grid">
+            <section class="surface surface-pad">
+              <div class="surface-header"><h2>Color</h2><span class="muted small">Semantic, not decorative</span></div>
+              <div class="swatches">
+                <div class="swatch"><div class="swatch-color" style="background:#111827"></div><span>Ink<br>#111827</span></div>
+                <div class="swatch"><div class="swatch-color" style="background:#1677ff"></div><span>Selection<br>#1677FF</span></div>
+                <div class="swatch"><div class="swatch-color" style="background:#c9ff45"></div><span>Primary action<br>#C9FF45</span></div>
+                <div class="swatch"><div class="swatch-color" style="background:#f47f6b"></div><span>Experiment<br>#F47F6B</span></div>
+                <div class="swatch"><div class="swatch-color" style="background:#16875f"></div><span>Verified<br>#16875F</span></div>
+              </div>
+            </section>
+
+            <section class="surface surface-pad">
+              <div class="surface-header"><h2>Typography</h2><span class="muted small">System sans</span></div>
+              <div class="stack">
+                <div class="type-sample-xl">Campaign intelligence</div>
+                <div class="type-sample-lg">Evidence becomes direction.</div>
+                <p class="muted">Body text prioritizes compact, direct explanations and readable evidence.</p>
+              </div>
+            </section>
+
+            <section class="surface surface-pad">
+              <div class="surface-header"><h2>Actions and states</h2></div>
+              <div class="stack">
+                <div class="inline">
+                  <button class="button button-primary" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>New campaign</button>
+                  <button class="button" type="button">Secondary</button>
+                  <button class="button button-coral" type="button">Create test</button>
+                  <button class="button" type="button" disabled>Disabled</button>
+                </div>
+                <div class="inline"><span class="chip chip-active">Selected</span><span class="chip chip-green"><span class="status-dot live"></span>Verified</span><span class="chip chip-coral">Hypothesis</span><span class="chip"><span class="status-dot draft"></span>Draft</span></div>
+              </div>
+            </section>
+
+            <section class="surface surface-pad">
+              <div class="surface-header"><h2>Evidence mosaic</h2><span class="muted small">Campco signature</span></div>
+              <p class="type-sample-lg" style="font-size:24px; line-height:1.55; margin:0;">Turn <span class="fragment-word">audience language</span> <span class="fragment" style="width:58px;height:34px"><svg aria-hidden="true"><use href="#scene-person"></use></svg></span> into campaigns grounded in <span class="fragment" style="width:58px;height:34px"><svg aria-hidden="true"><use href="#scene-coast"></use></svg></span> real opportunity.</p>
+            </section>
+
+            <section class="surface surface-pad">
+              <div class="surface-header"><h2>Form controls</h2></div>
+              <div class="stack">
+                <div class="form-control"><label for="ds-input">Company website</label><input class="input" id="ds-input" value="https://yourcompany.com"></div>
+                <div class="form-control"><label for="ds-select">Campaign objective</label><select class="select" id="ds-select"><option>Increase qualified signups</option></select></div>
+              </div>
+            </section>
+
+            <section class="surface surface-pad">
+              <div class="surface-header"><h2>Empty state</h2></div>
+              <div class="empty-state"><div><h3>No campaign evidence yet</h3><p>Add a source or run research to begin.</p><button class="button button-primary button-small" type="button">Add source</button></div></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const pages = [...document.querySelectorAll('[data-page]')];
+      const links = [...document.querySelectorAll('[data-route]')];
+      const knownRoutes = new Set(pages.map(page => page.dataset.page));
+
+      function showRoute(route) {
+        const nextRoute = knownRoutes.has(route) ? route : 'onboarding';
+        pages.forEach(page => { page.hidden = page.dataset.page !== nextRoute; });
+        links.forEach(link => {
+          if (link.dataset.route === nextRoute) link.setAttribute('aria-current', 'page');
+          else link.removeAttribute('aria-current');
+        });
+        document.title = `Campco · ${nextRoute === 'design' ? 'Design system' : nextRoute[0].toUpperCase() + nextRoute.slice(1)}`;
+      }
+
+      function currentRoute() { return window.location.hash.replace('#', '') || 'onboarding'; }
+      window.addEventListener('hashchange', () => showRoute(currentRoute()));
+
+      document.addEventListener('click', event => {
+        const routeTrigger = event.target.closest('[data-go]');
+        if (routeTrigger) window.location.hash = routeTrigger.dataset.go;
+
+        const selectable = event.target.closest('[data-select-group]');
+        if (selectable) {
+          const selector = `[data-select-group="${selectable.dataset.selectGroup}"]`;
+          document.querySelectorAll(selector).forEach(item => {
+            item.classList.remove('is-selected', 'is-active');
+            if (item.hasAttribute('aria-pressed')) item.setAttribute('aria-pressed', 'false');
+            item.removeAttribute('aria-current');
+          });
+          selectable.classList.add('is-selected');
+          if (selectable.hasAttribute('aria-pressed')) selectable.setAttribute('aria-pressed', 'true');
+          if (selectable.dataset.selectGroup === 'research-questions') selectable.setAttribute('aria-current', 'page');
+        }
+
+        const toggle = event.target.closest('[data-toggle-label]');
+        if (toggle) {
+          const next = toggle.dataset.toggleLabel;
+          toggle.dataset.toggleLabel = toggle.textContent.trim();
+          toggle.textContent = next;
+          toggle.classList.toggle('button-primary');
+        }
+
+        const approve = event.target.closest('[data-approve]');
+        if (approve) {
+          approve.textContent = 'Approved';
+          approve.disabled = true;
+          const status = document.querySelector('[data-campaign-status]');
+          if (status) status.innerHTML = '<span class="status-dot live"></span> Approved';
+        }
+      });
+
+      showRoute(currentRoute());
+    })();
+  </script>
+</body>
+</html>
