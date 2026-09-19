@@ -27,6 +27,9 @@ export type OnboardingDraft = {
   goalTitle: string;
   goalDescription: string;
   platforms: string[];
+  clientId?: string;
+  onboardedWebsite?: string;
+  discoverySource?: "live" | "fallback";
 };
 
 export type ResearchDraft = {
@@ -70,7 +73,10 @@ export function isOnboardingDraft(value: unknown): value is OnboardingDraft {
     && ["website", "linkedinUrl", "instagramUrl", "redditUrl", "xUrl", "companyContext", "competitorInput", "audienceInput", "goalTitle", "goalDescription"].every((key) => typeof draft[key] === "string")
     && isStringArray(draft.competitors)
     && isStringArray(draft.audiences)
-    && isStringArray(draft.platforms);
+    && isStringArray(draft.platforms)
+    && (draft.clientId === undefined || typeof draft.clientId === "string")
+    && (draft.onboardedWebsite === undefined || typeof draft.onboardedWebsite === "string")
+    && (draft.discoverySource === undefined || ["live", "fallback"].includes(String(draft.discoverySource)));
 }
 
 export function isResearchDraft(value: unknown): value is ResearchDraft {
