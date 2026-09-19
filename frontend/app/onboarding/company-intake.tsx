@@ -11,10 +11,12 @@ import {
   Plus,
   Search,
   Sparkles,
+  Users,
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CompanyMark } from "@/app/ui/company-mark";
 
 const steps = ["Connect", "Discover", "Campaign"] as const;
 const campaignPlatforms = ["Reddit", "LinkedIn", "Instagram", "X"];
@@ -34,6 +36,7 @@ function EditableList({
   setInput,
   onAdd,
   onRemove,
+  kind,
 }: {
   label: string;
   items: string[];
@@ -42,14 +45,26 @@ function EditableList({
   setInput: (value: string) => void;
   onAdd: () => void;
   onRemove: (item: string) => void;
+  kind: "company" | "audience";
 }) {
   return (
     <div className="editable-list">
       <span className="editable-list-label">{label}</span>
       <div className="editable-list-items">
-        {items.map((item) => (
-          <span className="editable-item" key={item}>
-            {item}
+        {items.map((item, index) => (
+          <span
+            className="editable-item"
+            key={item}
+            style={{ animationDelay: `${index * 35}ms` }}
+          >
+            <span className="item-identity">
+              {kind === "company" ? (
+                <CompanyMark company={item} />
+              ) : (
+                <span className="audience-mark" aria-hidden="true"><Users size={15} /></span>
+              )}
+              <span>{item}</span>
+            </span>
             <button type="button" onClick={() => onRemove(item)} aria-label={`Remove ${item}`}>
               <X size={13} aria-hidden="true" />
             </button>
@@ -195,6 +210,7 @@ export function CompanyIntake() {
           <div className="discovery-lists">
             <EditableList
               label="Competitors"
+              kind="company"
               items={competitors}
               input={competitorInput}
               placeholder="Add a company or URL"
@@ -204,6 +220,7 @@ export function CompanyIntake() {
             />
             <EditableList
               label="Audience groups"
+              kind="audience"
               items={audiences}
               input={audienceInput}
               placeholder="Describe another audience"
