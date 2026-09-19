@@ -6,14 +6,18 @@ import {
   BarChart3,
   CalendarDays,
   Check,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   CirclePause,
   Clock3,
   Eye,
+  FileText,
   Lightbulb,
   MessageSquareText,
+  Send,
   Sparkles,
+  Split,
   Target,
   Users,
   X,
@@ -37,11 +41,64 @@ const pipeline = [
   { label: "Learn", detail: "Attribute results by creative lever", state: "waiting" },
 ] as const;
 
+const experimentVariants = [
+  {
+    id: "A",
+    label: "Question hook",
+    creative: "Carousel · soft CTA",
+    engagement: "5.8%",
+    baseline: "z 1.7",
+    result: "+41% vs B",
+    winner: true,
+  },
+  {
+    id: "B",
+    label: "Statistic hook",
+    creative: "Carousel · soft CTA",
+    engagement: "4.1%",
+    baseline: "z 0.8",
+    result: "Control",
+    winner: false,
+  },
+] as const;
+
+const mockPosts = [
+  {
+    id: "post-1",
+    platform: "LinkedIn",
+    variant: "A",
+    format: "Carousel",
+    hook: "What if Monday did not begin with a status hunt?",
+  },
+  {
+    id: "post-2",
+    platform: "LinkedIn",
+    variant: "B",
+    format: "Carousel",
+    hook: "Teams lose 3.2 hours each week rebuilding context.",
+  },
+  {
+    id: "post-3",
+    platform: "Reddit",
+    variant: "A",
+    format: "Text post",
+    hook: "We replaced our Monday reporting ritual with five quiet minutes.",
+  },
+  {
+    id: "post-4",
+    platform: "Reddit",
+    variant: "B",
+    format: "Text post",
+    hook: "The problem was not another missing productivity tool.",
+  },
+] as const;
+
 export function CampaignWorkspace() {
   const [statuses, setStatuses] = useState<Record<string, SuggestionStatus>>(
     Object.fromEntries(campaignSuggestions.map((suggestion) => [suggestion.id, "pending"])),
   );
   const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(campaignSuggestions[0].id);
+  const [mockPublished, setMockPublished] = useState(false);
 
   const approvedCount = useMemo(
     () => Object.values(statuses).filter((status) => status === "approved").length,
@@ -203,6 +260,76 @@ export function CampaignWorkspace() {
               </aside>
             </div>
             <p className="performance-caveat">Four demo posts per wave provide directional evidence, not statistical significance.</p>
+          </section>
+
+          <section className="campaign-section experiment-section" aria-labelledby="experiment-title">
+            <div className="campaign-section-heading">
+              <div>
+                <p className="eyebrow">A/B testing</p>
+                <h2 id="experiment-title">Question hook vs. statistic hook</h2>
+                <p>The format, CTA, audience, and publish window stayed fixed so the hook is the only changed lever.</p>
+              </div>
+              <span className="experiment-status"><Split size={14} aria-hidden="true" /> Simulation complete</span>
+            </div>
+
+            <div className="experiment-variants">
+              {experimentVariants.map((variant) => (
+                <article data-winner={variant.winner || undefined} key={variant.id}>
+                  <div className="variant-heading">
+                    <span>Variant {variant.id}</span>
+                    {variant.winner ? <strong><Sparkles size={13} aria-hidden="true" /> Directional winner</strong> : null}
+                  </div>
+                  <h3>{variant.label}</h3>
+                  <p>{variant.creative}</p>
+                  <dl>
+                    <div><dt>Engagement rate</dt><dd>{variant.engagement}</dd></div>
+                    <div><dt>Account baseline</dt><dd>{variant.baseline}</dd></div>
+                    <div><dt>Result</dt><dd>{variant.result}</dd></div>
+                  </dl>
+                </article>
+              ))}
+            </div>
+
+            <div className="experiment-learning">
+              <Lightbulb size={18} aria-hidden="true" />
+              <p><strong>Learning recorded:</strong> operations audiences respond better when the post opens with their lived problem instead of an abstract benchmark.</p>
+            </div>
+          </section>
+
+          <section className="campaign-section publishing-section" aria-labelledby="publishing-title">
+            <div className="campaign-section-heading">
+              <div>
+                <p className="eyebrow">Mock posting</p>
+                <h2 id="publishing-title">Wave 3 publishing queue</h2>
+                <p>Four lever-assigned posts are ready for a simulated publish across the selected platforms.</p>
+              </div>
+              <button
+                className="button primary"
+                type="button"
+                disabled={mockPublished}
+                onClick={() => setMockPublished(true)}
+              >
+                {mockPublished ? <CheckCircle2 size={16} aria-hidden="true" /> : <Send size={16} aria-hidden="true" />}
+                {mockPublished ? "Demo wave published" : "Publish demo wave"}
+              </button>
+            </div>
+
+            <div className="publishing-queue" aria-live="polite">
+              {mockPosts.map((post) => (
+                <article key={post.id}>
+                  <span className="post-icon" aria-hidden="true"><FileText size={16} /></span>
+                  <div>
+                    <span className="post-meta">{post.platform} · Variant {post.variant} · {post.format}</span>
+                    <h3>{post.hook}</h3>
+                  </div>
+                  <span className="post-state" data-published={mockPublished || undefined}>
+                    {mockPublished ? <Check size={13} aria-hidden="true" /> : <Clock3 size={13} aria-hidden="true" />}
+                    {mockPublished ? "Published in demo" : "Queued"}
+                  </span>
+                </article>
+              ))}
+            </div>
+            <p className="mock-publish-note">No social account is connected. Publishing changes prototype state only.</p>
           </section>
         </main>
 

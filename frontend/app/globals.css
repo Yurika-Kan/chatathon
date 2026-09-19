@@ -1872,6 +1872,193 @@ meter::-moz-meter-bar {
   font-size: 10px;
 }
 
+.experiment-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #284d7d;
+  background: #e9f4ff;
+  font-size: 10px;
+  font-weight: 740;
+}
+
+.experiment-variants {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.experiment-variants article {
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fafbfc;
+}
+
+.experiment-variants article[data-winner] {
+  border-color: #b6d63c;
+  background: #f7ffdd;
+}
+
+.variant-heading {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.variant-heading > span {
+  color: #717886;
+  font-size: 9px;
+  font-weight: 760;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.variant-heading > strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #466100;
+  font-size: 9px;
+}
+
+.experiment-variants h3 {
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.experiment-variants article > p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.experiment-variants dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-top: 15px;
+}
+
+.experiment-variants dl div {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.experiment-variants dt {
+  color: #818894;
+  font-size: 8px;
+  line-height: 1.3;
+}
+
+.experiment-variants dd {
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.experiment-learning {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 12px;
+  padding: 13px 14px;
+  border-radius: 9px;
+  color: #2d394b;
+  background: var(--blue-soft);
+}
+
+.experiment-learning svg {
+  flex: 0 0 auto;
+  color: #4263c3;
+}
+
+.experiment-learning p {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.publishing-queue {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+
+.publishing-queue article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.publishing-queue article:last-child {
+  border-bottom: 0;
+}
+
+.post-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 9px;
+  color: #3f61c2;
+  background: var(--blue-soft);
+}
+
+.post-meta {
+  display: block;
+  margin-bottom: 4px;
+  color: #787f8d;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.publishing-queue h3 {
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  color: #626977;
+  background: #f0f2f4;
+  font-size: 9px;
+  font-weight: 710;
+  white-space: nowrap;
+}
+
+.post-state[data-published] {
+  color: #3f5a00;
+  background: #eaffb7;
+}
+
+.mock-publish-note {
+  margin-top: 11px;
+  color: #858b96;
+  font-size: 9px;
+}
+
 .campaign-side-card {
   padding: 20px;
 }
@@ -2321,6 +2508,7 @@ meter::-moz-meter-bar {
 
   .evidence-grid,
   .performance-layout,
+  .experiment-variants,
   .campaign-secondary {
     grid-template-columns: 1fr;
   }
@@ -2346,6 +2534,19 @@ meter::-moz-meter-bar {
     grid-template-columns: minmax(105px, 1fr) minmax(80px, 1fr) 39px;
     gap: 8px;
   }
+
+  .publishing-section .campaign-section-heading .button {
+    width: 100%;
+  }
+
+  .publishing-queue article {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .post-state {
+    grid-column: 2;
+    width: fit-content;
+  }
 }
 
 @media (max-width: 380px) {
@@ -2366,7 +2567,8 @@ meter::-moz-meter-bar {
 
   .campaign-facts,
   .dashboard-summary,
-  .suggestion-meta {
+  .suggestion-meta,
+  .experiment-variants dl {
     grid-template-columns: 1fr;
   }
 
