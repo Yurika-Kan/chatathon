@@ -2,8 +2,9 @@
 
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { campaignSuggestions } from "@/lib/campaigns";
+import { isCampaignWorkspaceDraft, storageKeys, type CampaignWorkspaceDraft } from "@/lib/storage-schema";
+import { usePersistedState } from "@/lib/use-persisted-state";
 
 type DataView = "opportunities" | "source" | "results";
 
@@ -12,6 +13,12 @@ const views: { id: DataView; label: string }[] = [
   { id: "source", label: "Source data" },
   { id: "results", label: "Results" },
 ];
+
+const initialWorkspace: CampaignWorkspaceDraft = {
+  view: "opportunities",
+  selectedOpportunityId: campaignSuggestions[0].id,
+  selectedTopicId: "weekly-reset",
+};
 
 const opportunityMetrics: Record<string, { evidence: string; platform: string }> = {
   "monday-reset": { evidence: "Volume +38% · engagement +24%", platform: "LinkedIn" },
@@ -57,9 +64,12 @@ const leverStats = [
 ] as const;
 
 export function CampaignWorkspace() {
-  const [view, setView] = useState<DataView>("opportunities");
-  const [selectedOpportunityId, setSelectedOpportunityId] = useState(campaignSuggestions[0].id);
-  const [selectedTopicId, setSelectedTopicId] = useState<string>(topics[0].id);
+  const [workspace, setWorkspace] = usePersistedState(storageKeys.campaignWorkspace, initialWorkspace, isCampaignWorkspaceDraft);
+  const { view, selectedOpportunityId, selectedTopicId } = workspace;
+
+  function updateWorkspace(patch: Partial<CampaignWorkspaceDraft>) {
+    setWorkspace((current) => ({ ...current, ...patch }));
+  }
 
   const selectedOpportunity = campaignSuggestions.find((item) => item.id === selectedOpportunityId) ?? campaignSuggestions[0];
   const selectedTopic = topics.find((item) => item.id === selectedTopicId) ?? topics[0];
@@ -88,7 +98,7 @@ export function CampaignWorkspace() {
               aria-pressed={view === item.id}
               className="campaign-data-tab"
               key={item.id}
-              onClick={() => setView(item.id)}
+              onClick={() => updateWorkspace({ view: item.id })}
               type="button"
             >
               {item.label}
@@ -126,7 +136,7 @@ export function CampaignWorkspace() {
                       return (
                         <tr data-selected={selected || undefined} key={suggestion.id}>
                           <td data-label="Opportunity">
-                            <button aria-pressed={selected} className="campaign-data-row-button" onClick={() => setSelectedOpportunityId(suggestion.id)} type="button">
+                            <button aria-pressed={selected} className="campaign-data-row-button" onClick={() => updateWorkspace({ selectedOpportunityId: suggestion.id })} type="button">
                               {suggestion.title}
                             </button>
                             <small>{suggestion.angle}</small>
@@ -195,7 +205,7 @@ export function CampaignWorkspace() {
                       return (
                         <tr data-selected={selected || undefined} key={topic.id}>
                           <td data-label="Topic">
-                            <button aria-pressed={selected} className="campaign-data-row-button" onClick={() => setSelectedTopicId(topic.id)} type="button">
+                            <button aria-pressed={selected} className="campaign-data-row-button" onClick={() => updateWorkspace({ selectedTopicId: topic.id })} type="button">
                               {topic.label}
                             </button>
                             <small>{topic.posts} posts</small>
