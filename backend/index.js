@@ -1,5 +1,13 @@
 const { onRequest } = require("firebase-functions/v2/https");
+const express = require("express");
+const cors = require("cors");
 
-exports.helloWorld = onRequest((req, res) => {
-  res.json({ message: "Hello from Chatathon 2026 backend!" });
+const app = express();
+app.use(cors({ origin: true }));
+app.use(express.json());
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
+
+exports.api = onRequest(app);
