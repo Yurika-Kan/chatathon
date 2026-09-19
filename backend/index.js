@@ -133,6 +133,11 @@ function normalizeSocial(platform, raw) {
  *     twitter?: string        — e.g. "campcocoffee", "@campcocoffee", or full URL
  *     reddit?: string         — e.g. "coffee", "r/coffee", or full URL
  *   }
+ *   country?: string          — 2-letter code for competitor discovery (default "us")
+ *
+ * Also runs Ahrefs competitor discovery and persists the result on the client.
+ * Discovery is best-effort: on failure the client is still created and the
+ * response carries a `competitorsError` string.
  *
  * Response: {
  *   client: {
@@ -143,18 +148,24 @@ function normalizeSocial(platform, raw) {
  *       twitter:   { url, handle } | null,
  *       reddit:    { url, handle } | null
  *     },
- *     competitors: [], icps: [], createdAt
- *   }
+ *     competitors: [
+ *       { domain, website, domainRating, sharedKeywords, overlapShare, estimatedTraffic }
+ *     ],
+ *     icps: [], createdAt
+ *   },
+ *   competitorsError?: string
  * }
  */
 app.post("/onboard", async (req, res) => {
-  const { name, website, socials } = req.body;
+  const { name, website, socials, country = "us" } = req.body;
   if (!name || !website) return res.status(400).json({ error: "name and website are required" });
+
+  const normalizedWebsite = website.startsWith("http") ? website : `https://${website}`;
 
   try {
     const client = await createClient({
       name,
-      website: website.startsWith("http") ? website : `https://${website}`,
+      website: normalizedWebsite,
       socials: {
         linkedin: normalizeSocial("linkedin", socials?.linkedin),
         instagram: normalizeSocial("instagram", socials?.instagram),
@@ -162,43 +173,74 @@ app.post("/onboard", async (req, res) => {
         reddit: normalizeSocial("reddit", socials?.reddit),
       },
     });
-    res.status(201).json({ client });
+
+    // Competitor discovery is best-effort — a client record is still useful without it.
+    let competitorsError = null;
+    try {
+      const domain = new URL(normalizedWebsite).hostname.replace(/^www\./, "");
+      const { competitors } = await discoverCompetitors(domain, country);
+      if (competitors.length) {
+        client.competitors = competitors;
+        await updateClient(client.id, { competitors });
+      }
+    } catch (err) {
+      competitorsError = err.message;
+    }
+
+    res.status(201).json({ client, ...(competitorsError ? { competitorsError } : {}) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+const GENERIC_DOMAINS = new Set([
+  "instagram.com", "reddit.com", "youtube.com", "facebook.com",
+  "twitter.com", "x.com", "linkedin.com", "pinterest.com",
+  "tiktok.com", "amazon.com", "wikipedia.org", "yelp.com",
+]);
+
+/*
+ * Ahrefs organic-competitors, filtered down to real competitors.
+ * Returns { raw, competitors } where competitors is:
+ *   [{ domain, website, domainRating, sharedKeywords, overlapShare, estimatedTraffic }]
+ */
+async function discoverCompetitors(domain, country = "us") {
+  const today = new Date().toISOString().split("T")[0];
+  const raw = await runEndpoint("ahrefs", "/site-explorer/organic-competitors", {
+    query: {
+      target: domain,
+      date: today,
+      country,
+      limit: 10,
+      order_by: "keywords_common:desc",
+    },
+  });
+
+  const rows = (raw.output?.rows ?? [])
+    .filter((r) => !GENERIC_DOMAINS.has(r.competitor_domain))
+    .slice(0, 5);
+
+  if (raw.output?.rows) raw.output.rows = rows;
+
+  const competitors = rows.map((r) => ({
+    domain: r.competitor_domain.replace(/^www\./, ""),
+    website: `https://${r.competitor_domain}`,
+    domainRating: r.domain_rating ?? null,
+    sharedKeywords: r.keywords_common ?? null,
+    overlapShare: r.share ?? null,
+    estimatedTraffic: r.traffic ?? null,
+  }));
+
+  return { raw, competitors };
+}
+
 app.post("/monid/competitors", async (req, res) => {
   const { domain, country = "us" } = req.body;
   if (!domain) return res.status(400).json({ error: "domain is required" });
 
-  const GENERIC_DOMAINS = new Set([
-    "instagram.com", "reddit.com", "youtube.com", "facebook.com",
-    "twitter.com", "x.com", "linkedin.com", "pinterest.com",
-    "tiktok.com", "amazon.com", "wikipedia.org", "yelp.com",
-  ]);
-
   try {
-    const today = new Date().toISOString().split("T")[0];
-    const result = await runEndpoint(
-      "ahrefs",
-      "/site-explorer/organic-competitors",
-      {
-        query: {
-          target: domain,
-          date: today,
-          country,
-          limit: 10,
-          order_by: "keywords_common:desc",
-        },
-      }
-    );
-    if (result.output?.rows) {
-      result.output.rows = result.output.rows
-        .filter((r) => !GENERIC_DOMAINS.has(r.competitor_domain))
-        .slice(0, 5);
-    }
-    res.json(result);
+    const { raw, competitors } = await discoverCompetitors(domain, country);
+    res.json({ ...raw, competitors });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
