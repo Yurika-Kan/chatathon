@@ -2,7 +2,12 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 
-const client = new OpenAI();
+let client: OpenAI | undefined;
+
+function getClient() {
+  client ??= new OpenAI();
+  return client;
+}
 
 const MODEL = "gpt-5.6-sol";
 
@@ -88,7 +93,7 @@ Rules:
  * and selected when persisting these as `suggestions` docs.
  */
 export async function generateSuggestions(research: Research, count = 6): Promise<Suggestion[]> {
-  const response = await client.responses.parse({
+  const response = await getClient().responses.parse({
     model: MODEL,
     input: [
       { role: "system", content: SYSTEM },

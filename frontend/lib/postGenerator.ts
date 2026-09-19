@@ -9,7 +9,12 @@ import type {
   Suggestion,
 } from "@/lib/suggestions";
 
-const client = new OpenAI();
+let client: OpenAI | undefined;
+
+function getClient() {
+  client ??= new OpenAI();
+  return client;
+}
 
 const MODEL = "gpt-5.6-sol";
 
@@ -168,7 +173,7 @@ export async function generateWaveMedia({
 }: GenerateWaveArgs): Promise<Wave> {
   const evidence = resolveEvidence(suggestion, research);
 
-  const response = await client.responses.parse({
+  const response = await getClient().responses.parse({
     model: MODEL,
     input: [
       { role: "system", content: SYSTEM },

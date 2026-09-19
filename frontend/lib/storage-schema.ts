@@ -1,8 +1,12 @@
+import type { Wave } from "@/lib/postGenerator";
+
 export const storageKeys = {
   onboardingDraft: "campco:v1:onboarding:draft",
   researchDraft: "campco:v1:research:draft",
   researchLastResult: "campco:v1:research:last-result",
   campaignWorkspace: "campco:v1:campaign:workspace",
+  generationDraft: "campco:v1:generation:draft",
+  generationLastWave: "campco:v1:generation:last-wave",
   campaigns: "campco:v1:campaigns",
   outbox: "campco:v1:outbox",
 } as const;
@@ -43,6 +47,18 @@ export type CampaignWorkspaceDraft = {
   selectedTopicId: string;
 };
 
+export type GenerationDraft = {
+  suggestion: string;
+  research: string;
+  styleProfile: string;
+};
+
+export type CachedGeneration = {
+  draft: GenerationDraft;
+  wave: Wave;
+  generatedAt: string;
+};
+
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === "string");
 
@@ -74,4 +90,23 @@ export function isCampaignWorkspaceDraft(value: unknown): value is CampaignWorks
   return ["opportunities", "source", "results"].includes(String(draft.view))
     && typeof draft.selectedOpportunityId === "string"
     && typeof draft.selectedTopicId === "string";
+}
+
+export function isGenerationDraft(value: unknown): value is GenerationDraft {
+  if (!value || typeof value !== "object") return false;
+  const draft = value as Record<string, unknown>;
+  return typeof draft.suggestion === "string"
+    && typeof draft.research === "string"
+    && typeof draft.styleProfile === "string";
+}
+
+export function isCachedGeneration(value: unknown): value is CachedGeneration {
+  if (!value || typeof value !== "object") return false;
+  const cached = value as Record<string, unknown>;
+  const wave = cached.wave as Record<string, unknown> | undefined;
+  return isGenerationDraft(cached.draft)
+    && typeof cached.generatedAt === "string"
+    && Boolean(wave)
+    && typeof wave?.testedLever === "string"
+    && Array.isArray(wave?.media);
 }

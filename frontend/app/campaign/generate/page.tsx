@@ -1,8 +1,11 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { readStoredValue, writeStoredValue } from "@/lib/browser-storage";
 import type { MediaDoc, Wave } from "@/lib/postGenerator";
+import { isCachedGeneration, isGenerationDraft, storageKeys, type CachedGeneration, type GenerationDraft } from "@/lib/storage-schema";
+import { usePersistedState } from "@/lib/use-persisted-state";
 
 const SAMPLE_SUGGESTION = JSON.stringify(
   {
@@ -61,19 +64,36 @@ const SAMPLE_STYLE = JSON.stringify(
   2,
 );
 
+const initialDraft: GenerationDraft = {
+  suggestion: SAMPLE_SUGGESTION,
+  research: SAMPLE_RESEARCH,
+  styleProfile: SAMPLE_STYLE,
+};
+
+function draftsMatch(left: GenerationDraft, right: GenerationDraft) {
+  return left.suggestion === right.suggestion
+    && left.research === right.research
+    && left.styleProfile === right.styleProfile;
+}
+
 export default function CampaignPage() {
-  const [suggestion, setSuggestion] = useState(SAMPLE_SUGGESTION);
-  const [research, setResearch] = useState(SAMPLE_RESEARCH);
-  const [styleProfile, setStyleProfile] = useState(SAMPLE_STYLE);
+  const [draft, setDraft, hydrated] = usePersistedState(storageKeys.generationDraft, initialDraft, isGenerationDraft);
+  const { suggestion, research, styleProfile } = draft;
 
   const [wave, setWave] = useState<Wave | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!hydrated) return;
+    void readStoredValue(storageKeys.generationLastWave, isCachedGeneration).then((cached) => {
+      if (cached && draftsMatch(cached.draft, draft)) setWave(cached.wave);
+    });
+  }, [draft, hydrated]);
+
   async function generate() {
     setLoading(true);
     setError(null);
-    setWave(null);
 
     try {
       const response = await fetch("/api/generate-posts", {
@@ -88,9 +108,17 @@ export default function CampaignPage() {
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      setWave(data);
+      const cached: CachedGeneration = { draft, wave: data as Wave, generatedAt: new Date().toISOString() };
+      setWave(cached.wave);
+      await writeStoredValue(storageKeys.generationLastWave, cached);
     } catch (err) {
-      setError((err as Error).message);
+      const cached = await readStoredValue(storageKeys.generationLastWave, isCachedGeneration);
+      if (cached && draftsMatch(cached.draft, draft)) {
+        setWave(cached.wave);
+        setError(`${(err as Error).message} Showing the last saved wave.`);
+      } else {
+        setError((err as Error).message);
+      }
     } finally {
       setLoading(false);
     }
@@ -105,13 +133,13 @@ export default function CampaignPage() {
 
       <div style={{ display: "grid", gap: "1rem", marginTop: "2rem" }}>
         <Field label="Suggestion — one item from POST /api/suggestions">
-          <textarea value={suggestion} onChange={(e) => setSuggestion(e.target.value)} rows={8} style={monoInputStyle} />
+          <textarea value={suggestion} onChange={(e) => setDraft((current) => ({ ...current, suggestion: e.target.value }))} rows={8} style={monoInputStyle} />
         </Field>
         <Field label="Research — evidence refs on the suggestion are resolved against this">
-          <textarea value={research} onChange={(e) => setResearch(e.target.value)} rows={12} style={monoInputStyle} />
+          <textarea value={research} onChange={(e) => setDraft((current) => ({ ...current, research: e.target.value }))} rows={12} style={monoInputStyle} />
         </Field>
         <Field label="Style profile — extracted from the company's own top posts">
-          <textarea value={styleProfile} onChange={(e) => setStyleProfile(e.target.value)} rows={8} style={monoInputStyle} />
+          <textarea value={styleProfile} onChange={(e) => setDraft((current) => ({ ...current, styleProfile: e.target.value }))} rows={8} style={monoInputStyle} />
         </Field>
       </div>
 
