@@ -1,384 +1,287 @@
 "use client";
 
-import {
-  ArrowLeft,
-  ArrowRight,
-  BarChart3,
-  CalendarDays,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-  CirclePause,
-  Clock3,
-  Eye,
-  FileText,
-  Lightbulb,
-  MessageSquareText,
-  Send,
-  Sparkles,
-  Split,
-  Target,
-  Users,
-  X,
-  Zap,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { campaignSuggestions, type SuggestionStatus } from "@/lib/campaigns";
+import { useState } from "react";
+import { campaignSuggestions } from "@/lib/campaigns";
 
-const interests = [
-  { label: "Calm operating systems", momentum: "+38% topic volume", strength: 88 },
-  { label: "Before-and-after workflows", momentum: "1.8× baseline engagement", strength: 76 },
-  { label: "Fewer tools, clearer ownership", momentum: "+21% discussion growth", strength: 67 },
+type DataView = "opportunities" | "source" | "results";
+
+const views: { id: DataView; label: string }[] = [
+  { id: "opportunities", label: "Opportunities" },
+  { id: "source", label: "Source data" },
+  { id: "results", label: "Results" },
 ];
 
-const pipeline = [
-  { label: "Research", detail: "Corpus and signals ready", state: "complete" },
-  { label: "Direction", detail: "Choose the next-wave suggestions", state: "current" },
-  { label: "Media", detail: "Generate 4 lever-assigned variants", state: "waiting" },
-  { label: "Publish", detail: "Mock wave scheduled after approval", state: "waiting" },
-  { label: "Learn", detail: "Attribute results by creative lever", state: "waiting" },
+const opportunityMetrics: Record<string, { evidence: string; platform: string }> = {
+  "monday-reset": { evidence: "Volume +38% · engagement +24%", platform: "LinkedIn" },
+  "show-the-work": { evidence: "Audience 1.8× · competitor coverage 6%", platform: "LinkedIn" },
+  "anti-productivity": { evidence: "Breakout z 3.1 · no competitor response", platform: "Reddit" },
+};
+
+const topics = [
+  { id: "weekly-reset", label: "Weekly reset rituals", posts: 18, volume: "+38%", engagement: "5.6%", audience: "31%", competitor: "6%", company: "4%" },
+  { id: "workflow-transformations", label: "Workflow transformations", posts: 12, volume: "+19%", engagement: "6.3%", audience: "26%", competitor: "6%", company: "8%" },
+  { id: "tool-fatigue", label: "Tool fatigue", posts: 23, volume: "+31%", engagement: "7.1%", audience: "41%", competitor: "0%", company: "0%" },
 ] as const;
 
-const experimentVariants = [
-  {
-    id: "A",
-    label: "Question hook",
-    creative: "Carousel · soft CTA",
-    engagement: "5.8%",
-    baseline: "z 1.7",
-    result: "+41% vs B",
-    winner: true,
-  },
-  {
-    id: "B",
-    label: "Statistic hook",
-    creative: "Carousel · soft CTA",
-    engagement: "4.1%",
-    baseline: "z 0.8",
-    result: "Control",
-    winner: false,
-  },
+const topicEvidence: Record<string, { source: string; platform: string; excerpt: string; metric: string }[]> = {
+  "weekly-reset": [
+    { source: "Operations Weekly", platform: "Reddit", excerpt: "What does your team reset every Monday?", metric: "7.4% ER · z 2.2" },
+    { source: "Linear", platform: "LinkedIn", excerpt: "A calmer way to begin the operating week", metric: "5.9% ER · z 1.6" },
+    { source: "r/operations", platform: "Reddit", excerpt: "The five-minute ritual that stopped status hunting", metric: "6.8% ER · z 1.9" },
+  ],
+  "workflow-transformations": [
+    { source: "OpsLevel", platform: "LinkedIn", excerpt: "Before and after: one project handoff", metric: "8.1% ER · z 2.4" },
+    { source: "r/startups", platform: "Reddit", excerpt: "We removed three steps from weekly reporting", metric: "6.4% ER · z 1.7" },
+    { source: "Asana", platform: "LinkedIn", excerpt: "What changed when ownership became visible", metric: "5.5% ER · z 1.3" },
+  ],
+  "tool-fatigue": [
+    { source: "r/productivity", platform: "Reddit", excerpt: "I do not need another productivity system", metric: "9.3% ER · z 3.1" },
+    { source: "r/operations", platform: "Reddit", excerpt: "More software made our reporting less clear", metric: "7.8% ER · z 2.5" },
+    { source: "Operations Nation", platform: "LinkedIn", excerpt: "The case for fewer operating tools", metric: "6.2% ER · z 1.8" },
+  ],
+};
+
+const mediaResults = [
+  { id: "A1", platform: "LinkedIn", levers: "Question · Carousel · Soft CTA", impressions: "12.4k", engagement: "5.8%", zScore: "1.7" },
+  { id: "A2", platform: "Reddit", levers: "Question · Text · Soft CTA", impressions: "9.8k", engagement: "6.2%", zScore: "2.0" },
+  { id: "B1", platform: "LinkedIn", levers: "Statistic · Carousel · Soft CTA", impressions: "11.9k", engagement: "4.1%", zScore: "0.8" },
+  { id: "B2", platform: "Reddit", levers: "Statistic · Text · Soft CTA", impressions: "10.1k", engagement: "4.4%", zScore: "0.9" },
 ] as const;
 
-const mockPosts = [
-  {
-    id: "post-1",
-    platform: "LinkedIn",
-    variant: "A",
-    format: "Carousel",
-    hook: "What if Monday did not begin with a status hunt?",
-  },
-  {
-    id: "post-2",
-    platform: "LinkedIn",
-    variant: "B",
-    format: "Carousel",
-    hook: "Teams lose 3.2 hours each week rebuilding context.",
-  },
-  {
-    id: "post-3",
-    platform: "Reddit",
-    variant: "A",
-    format: "Text post",
-    hook: "We replaced our Monday reporting ritual with five quiet minutes.",
-  },
-  {
-    id: "post-4",
-    platform: "Reddit",
-    variant: "B",
-    format: "Text post",
-    hook: "The problem was not another missing productivity tool.",
-  },
+const leverStats = [
+  { lever: "Hook", value: "Question", trials: 4, wins: 3, lift: "+23%" },
+  { lever: "Format", value: "Carousel", trials: 4, wins: 3, lift: "+14%" },
+  { lever: "CTA", value: "Soft", trials: 4, wins: 2, lift: "+7%" },
 ] as const;
 
 export function CampaignWorkspace() {
-  const [statuses, setStatuses] = useState<Record<string, SuggestionStatus>>(
-    Object.fromEntries(campaignSuggestions.map((suggestion) => [suggestion.id, "pending"])),
-  );
-  const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(campaignSuggestions[0].id);
-  const [mockPublished, setMockPublished] = useState(false);
+  const [view, setView] = useState<DataView>("opportunities");
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState(campaignSuggestions[0].id);
+  const [selectedTopicId, setSelectedTopicId] = useState<string>(topics[0].id);
 
-  const approvedCount = useMemo(
-    () => Object.values(statuses).filter((status) => status === "approved").length,
-    [statuses],
-  );
-
-  function setSuggestionStatus(id: string, status: SuggestionStatus) {
-    setStatuses((current) => ({ ...current, [id]: status }));
-  }
+  const selectedOpportunity = campaignSuggestions.find((item) => item.id === selectedOpportunityId) ?? campaignSuggestions[0];
+  const selectedTopic = topics.find((item) => item.id === selectedTopicId) ?? topics[0];
 
   return (
-    <div className="page campaign-page">
+    <div className="page campaign-page campaign-data-page">
       <Link className="back-link" href="/dashboard">
         <ArrowLeft size={16} aria-hidden="true" /> Dashboard
       </Link>
 
-      <header className="campaign-header">
-        <div>
-          <div className="campaign-kicker">
-            <span className="campaign-status" data-status="active">Active</span>
-            <span>Demo campaign · Wave 2 of 3</span>
-          </div>
-          <h1>Customer stories</h1>
-          <p>Turn real customer outcomes into an ongoing social proof series for operations leaders.</p>
-        </div>
-        <div className="campaign-header-actions">
-          <button className="button secondary" type="button">
-            <CirclePause size={17} aria-hidden="true" /> Pause
-          </button>
-          <button className="button primary" type="button" disabled={approvedCount === 0}>
-            Generate next wave <ArrowRight size={17} aria-hidden="true" />
-          </button>
+      <header className="campaign-data-header">
+        <p>Campaign data · Demo corpus</p>
+        <h1>Customer stories</h1>
+        <div className="campaign-data-context">
+          <span>Goal: qualified engagement</span>
+          <span>Operations leads</span>
+          <span>LinkedIn + Reddit</span>
+          <span>Sep 19–27</span>
         </div>
       </header>
 
-      <section className="campaign-facts" aria-label="Campaign facts">
-        <div><CalendarDays size={17} aria-hidden="true" /><span><small>Calendar</small><strong>Sep 19–27</strong></span></div>
-        <div><Target size={17} aria-hidden="true" /><span><small>Goal</small><strong>Qualified engagement</strong></span></div>
-        <div><Users size={17} aria-hidden="true" /><span><small>Audience</small><strong>Operations leads</strong></span></div>
-        <div><Zap size={17} aria-hidden="true" /><span><small>Platforms</small><strong>LinkedIn · Reddit</strong></span></div>
-      </section>
+      <div className="campaign-data-surface">
+        <nav className="campaign-data-tabs" aria-label="Campaign data views">
+          {views.map((item) => (
+            <button
+              aria-pressed={view === item.id}
+              className="campaign-data-tab"
+              key={item.id}
+              onClick={() => setView(item.id)}
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
 
-      <div className="campaign-workspace-layout">
-        <main className="campaign-primary">
-          <section className="campaign-section" aria-labelledby="opportunities-title">
-            <div className="campaign-section-heading">
+        {view === "opportunities" ? (
+          <section className="campaign-data-panel" aria-labelledby="opportunities-heading">
+            <header className="campaign-data-panel-heading">
               <div>
-                <p className="eyebrow">Research synthesis</p>
-                <h2 id="opportunities-title">Choose the next directions</h2>
-                <p>Each suggestion comes from a scored trend, content gap, or unanswered viral moment.</p>
+                <h2 id="opportunities-heading">Research opportunities</h2>
+                <p>Deterministically scored from topic momentum, audience response, and competitor coverage.</p>
               </div>
-              <span className="decision-count" aria-live="polite">{approvedCount} approved</span>
-            </div>
+              <span>3 signals</span>
+            </header>
 
-            <div className="suggestion-list">
-              {campaignSuggestions.map((suggestion) => {
-                const status = statuses[suggestion.id];
-                const expanded = expandedSuggestion === suggestion.id;
+            <div className="campaign-data-split">
+              <div className="campaign-data-table-wrap">
+                <table className="campaign-data-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Opportunity</th>
+                      <th scope="col">Signal</th>
+                      <th scope="col">Score</th>
+                      <th scope="col">Strongest evidence</th>
+                      <th scope="col">Platform</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {campaignSuggestions.map((suggestion) => {
+                      const selected = suggestion.id === selectedOpportunity.id;
+                      const metrics = opportunityMetrics[suggestion.id];
 
-                return (
-                  <article className="suggestion-card" data-status={status} key={suggestion.id}>
-                    <div className="suggestion-card-main">
-                      <div className="suggestion-card-topline">
-                        <span className="signal-label" data-signal={suggestion.type.toLowerCase().replace(" ", "-")}>
-                          {suggestion.type}
-                        </span>
-                        <span className="signal-score">Signal {suggestion.score}/100</span>
-                      </div>
-                      <h3>{suggestion.title}</h3>
-                      <p className="suggestion-angle">{suggestion.angle}</p>
-                      <p className="suggestion-rationale">{suggestion.rationale}</p>
-
-                      <dl className="suggestion-meta">
-                        <div><dt>Audience</dt><dd>{suggestion.audience}</dd></div>
-                        <div><dt>Platforms</dt><dd>{suggestion.platforms.join(" · ")}</dd></div>
-                      </dl>
-
-                      <button
-                        className="evidence-toggle"
-                        type="button"
-                        aria-expanded={expanded}
-                        onClick={() => setExpandedSuggestion(expanded ? null : suggestion.id)}
-                      >
-                        <Eye size={16} aria-hidden="true" />
-                        {expanded ? "Hide evidence" : `View ${suggestion.evidence.length} evidence points`}
-                        {expanded ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
-                      </button>
-
-                      {expanded ? (
-                        <div className="evidence-grid">
-                          {suggestion.evidence.map((item) => (
-                            <div key={item.summary}>
-                              <strong>{item.summary}</strong>
-                              <span>{item.detail}</span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <footer className="suggestion-actions">
-                      {status === "approved" ? <span className="decision-state approved"><Check size={15} /> Approved</span> : null}
-                      {status === "passed" ? <span className="decision-state passed"><X size={15} /> Passed</span> : null}
-                      <button
-                        className="button secondary"
-                        type="button"
-                        onClick={() => setSuggestionStatus(suggestion.id, status === "passed" ? "pending" : "passed")}
-                      >
-                        {status === "passed" ? "Undo pass" : "Pass"}
-                      </button>
-                      <button
-                        className="button primary"
-                        type="button"
-                        onClick={() => setSuggestionStatus(suggestion.id, status === "approved" ? "pending" : "approved")}
-                      >
-                        {status === "approved" ? "Undo approval" : "Approve direction"}
-                      </button>
-                    </footer>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-
-          <section className="campaign-section performance-section" aria-labelledby="performance-title">
-            <div className="campaign-section-heading">
-              <div>
-                <p className="eyebrow">Simulated performance</p>
-                <h2 id="performance-title">What Wave 2 taught us</h2>
-                <p>Directional results are attributed to the levers that changed, not merely to winning variants.</p>
+                      return (
+                        <tr data-selected={selected || undefined} key={suggestion.id}>
+                          <td data-label="Opportunity">
+                            <button aria-pressed={selected} className="campaign-data-row-button" onClick={() => setSelectedOpportunityId(suggestion.id)} type="button">
+                              {suggestion.title}
+                            </button>
+                            <small>{suggestion.angle}</small>
+                          </td>
+                          <td data-label="Signal"><span className="signal-label" data-signal={suggestion.type.toLowerCase().replace(" ", "-")}>{suggestion.type}</span></td>
+                          <td data-label="Score"><strong>{suggestion.score}</strong></td>
+                          <td data-label="Evidence">{metrics.evidence}</td>
+                          <td data-label="Platform">{metrics.platform}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-              <span className="performance-lift">+18% engagement</span>
-            </div>
 
-            <div className="performance-layout">
-              <div className="lever-results">
-                <div>
-                  <span><strong>Question hook</strong><small>vs. statistic hook</small></span>
-                  <meter min="0" max="100" value="82">82%</meter>
-                  <strong>+23%</strong>
+              <aside className="campaign-data-detail" aria-live="polite">
+                <div className="campaign-data-detail-topline">
+                  <span className="signal-label" data-signal={selectedOpportunity.type.toLowerCase().replace(" ", "-")}>{selectedOpportunity.type}</span>
+                  <strong>{selectedOpportunity.score}/100</strong>
                 </div>
-                <div>
-                  <span><strong>Carousel</strong><small>vs. single image</small></span>
-                  <meter min="0" max="100" value="71">71%</meter>
-                  <strong>+14%</strong>
-                </div>
-                <div>
-                  <span><strong>Soft CTA</strong><small>vs. direct CTA</small></span>
-                  <meter min="0" max="100" value="61">61%</meter>
-                  <strong>+7%</strong>
-                </div>
-              </div>
-              <aside className="refinement-note">
-                <Lightbulb size={19} aria-hidden="true" />
-                <div>
-                  <h3>Next-wave bias</h3>
-                  <p>Campco will favor question-led carousel concepts while preserving one alternative hook for exploration.</p>
+                <h3>{selectedOpportunity.title}</h3>
+                <p className="campaign-data-angle">{selectedOpportunity.angle}</p>
+                <p>{selectedOpportunity.rationale}</p>
+                <dl className="campaign-data-definition">
+                  <div><dt>Audience</dt><dd>{selectedOpportunity.audience}</dd></div>
+                  <div><dt>Platforms</dt><dd>{selectedOpportunity.platforms.join(" · ")}</dd></div>
+                </dl>
+                <h4>Evidence</h4>
+                <div className="campaign-evidence-list">
+                  {selectedOpportunity.evidence.map((item) => (
+                    <div key={item.summary}><strong>{item.summary}</strong><span>{item.detail}</span></div>
+                  ))}
                 </div>
               </aside>
             </div>
-            <p className="performance-caveat">Four demo posts per wave provide directional evidence, not statistical significance.</p>
           </section>
+        ) : null}
 
-          <section className="campaign-section experiment-section" aria-labelledby="experiment-title">
-            <div className="campaign-section-heading">
+        {view === "source" ? (
+          <section className="campaign-data-panel" aria-labelledby="source-heading">
+            <header className="campaign-data-panel-heading">
               <div>
-                <p className="eyebrow">A/B testing</p>
-                <h2 id="experiment-title">Question hook vs. statistic hook</h2>
-                <p>The format, CTA, audience, and publish window stayed fixed so the hook is the only changed lever.</p>
+                <h2 id="source-heading">Topic corpus</h2>
+                <p>Normalized audience, competitor, and company coverage from the cached post corpus.</p>
               </div>
-              <span className="experiment-status"><Split size={14} aria-hidden="true" /> Simulation complete</span>
-            </div>
+              <span>53 posts</span>
+            </header>
 
-            <div className="experiment-variants">
-              {experimentVariants.map((variant) => (
-                <article data-winner={variant.winner || undefined} key={variant.id}>
-                  <div className="variant-heading">
-                    <span>Variant {variant.id}</span>
-                    {variant.winner ? <strong><Sparkles size={13} aria-hidden="true" /> Directional winner</strong> : null}
-                  </div>
-                  <h3>{variant.label}</h3>
-                  <p>{variant.creative}</p>
-                  <dl>
-                    <div><dt>Engagement rate</dt><dd>{variant.engagement}</dd></div>
-                    <div><dt>Account baseline</dt><dd>{variant.baseline}</dd></div>
-                    <div><dt>Result</dt><dd>{variant.result}</dd></div>
-                  </dl>
-                </article>
-              ))}
-            </div>
+            <div className="campaign-data-split">
+              <div className="campaign-data-table-wrap">
+                <table className="campaign-data-table source-data-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Topic</th>
+                      <th scope="col">Volume</th>
+                      <th scope="col">Mean ER</th>
+                      <th scope="col">Audience</th>
+                      <th scope="col">Competitors</th>
+                      <th scope="col">Company</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topics.map((topic) => {
+                      const selected = topic.id === selectedTopic.id;
 
-            <div className="experiment-learning">
-              <Lightbulb size={18} aria-hidden="true" />
-              <p><strong>Learning recorded:</strong> operations audiences respond better when the post opens with their lived problem instead of an abstract benchmark.</p>
-            </div>
-          </section>
-
-          <section className="campaign-section publishing-section" aria-labelledby="publishing-title">
-            <div className="campaign-section-heading">
-              <div>
-                <p className="eyebrow">Mock posting</p>
-                <h2 id="publishing-title">Wave 3 publishing queue</h2>
-                <p>Four lever-assigned posts are ready for a simulated publish across the selected platforms.</p>
+                      return (
+                        <tr data-selected={selected || undefined} key={topic.id}>
+                          <td data-label="Topic">
+                            <button aria-pressed={selected} className="campaign-data-row-button" onClick={() => setSelectedTopicId(topic.id)} type="button">
+                              {topic.label}
+                            </button>
+                            <small>{topic.posts} posts</small>
+                          </td>
+                          <td data-label="Volume">{topic.volume}</td>
+                          <td data-label="Mean ER">{topic.engagement}</td>
+                          <td data-label="Audience">{topic.audience}</td>
+                          <td data-label="Competitors">{topic.competitor}</td>
+                          <td data-label="Company">{topic.company}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-              <button
-                className="button primary"
-                type="button"
-                disabled={mockPublished}
-                onClick={() => setMockPublished(true)}
-              >
-                {mockPublished ? <CheckCircle2 size={16} aria-hidden="true" /> : <Send size={16} aria-hidden="true" />}
-                {mockPublished ? "Demo wave published" : "Publish demo wave"}
-              </button>
-            </div>
 
-            <div className="publishing-queue" aria-live="polite">
-              {mockPosts.map((post) => (
-                <article key={post.id}>
-                  <span className="post-icon" aria-hidden="true"><FileText size={16} /></span>
-                  <div>
-                    <span className="post-meta">{post.platform} · Variant {post.variant} · {post.format}</span>
-                    <h3>{post.hook}</h3>
-                  </div>
-                  <span className="post-state" data-published={mockPublished || undefined}>
-                    {mockPublished ? <Check size={13} aria-hidden="true" /> : <Clock3 size={13} aria-hidden="true" />}
-                    {mockPublished ? "Published in demo" : "Queued"}
-                  </span>
-                </article>
-              ))}
-            </div>
-            <p className="mock-publish-note">No social account is connected. Publishing changes prototype state only.</p>
-          </section>
-        </main>
-
-        <aside className="campaign-secondary">
-          <section className="campaign-side-card" aria-labelledby="interests-title">
-            <div className="side-card-heading">
-              <div>
-                <p className="eyebrow">Audience interests</p>
-                <h2 id="interests-title">What is resonating</h2>
-              </div>
-              <MessageSquareText size={19} aria-hidden="true" />
-            </div>
-            <div className="interest-list">
-              {interests.map((interest) => (
-                <div key={interest.label}>
-                  <span><strong>{interest.label}</strong><small>{interest.momentum}</small></span>
-                  <meter min="0" max="100" value={interest.strength}>{interest.strength}%</meter>
+              <aside className="campaign-data-detail" aria-live="polite">
+                <p className="campaign-data-detail-label">Evidence posts</p>
+                <h3>{selectedTopic.label}</h3>
+                <p>{selectedTopic.posts} posts in this topic cluster, ranked by account-relative performance.</p>
+                <div className="source-evidence-list">
+                  {topicEvidence[selectedTopic.id].map((item) => (
+                    <article key={`${item.source}-${item.excerpt}`}>
+                      <div><strong>{item.source}</strong><span>{item.platform}</span></div>
+                      <p>{item.excerpt}</p>
+                      <small>{item.metric}</small>
+                    </article>
+                  ))}
                 </div>
-              ))}
+              </aside>
             </div>
           </section>
+        ) : null}
 
-          <section className="campaign-side-card" aria-labelledby="pipeline-title">
-            <div className="side-card-heading">
+        {view === "results" ? (
+          <section className="campaign-data-panel" aria-labelledby="results-heading">
+            <header className="campaign-data-panel-heading">
               <div>
-                <p className="eyebrow">Campaign pipeline</p>
-                <h2 id="pipeline-title">Current loop</h2>
+                <h2 id="results-heading">Wave 2 results</h2>
+                <p>Four simulated posts, normalized against each account&apos;s trailing baseline.</p>
               </div>
-              <Clock3 size={19} aria-hidden="true" />
-            </div>
-            <ol className="pipeline-list">
-              {pipeline.map((step, index) => (
-                <li data-state={step.state} key={step.label}>
-                  <span>{step.state === "complete" ? <Check size={13} aria-hidden="true" /> : index + 1}</span>
-                  <div><strong>{step.label}</strong><small>{step.detail}</small></div>
-                </li>
-              ))}
-            </ol>
-          </section>
+              <span>Directional</span>
+            </header>
 
-          <section className="campaign-side-card campaign-cost" aria-labelledby="cost-title">
-            <div>
-              <p className="eyebrow">Run cost</p>
-              <h2 id="cost-title">$24.18</h2>
+            <div className="campaign-data-split">
+              <div className="campaign-data-table-wrap">
+                <table className="campaign-data-table results-data-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Media</th>
+                      <th scope="col">Lever assignment</th>
+                      <th scope="col">Impressions</th>
+                      <th scope="col">Engagement rate</th>
+                      <th scope="col">z-score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mediaResults.map((result) => (
+                      <tr key={result.id}>
+                        <td data-label="Media"><strong>{result.id}</strong><small>{result.platform}</small></td>
+                        <td data-label="Levers">{result.levers}</td>
+                        <td data-label="Impressions">{result.impressions}</td>
+                        <td data-label="Engagement rate"><strong>{result.engagement}</strong></td>
+                        <td data-label="z-score">{result.zScore}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <aside className="campaign-data-detail results-detail">
+                <p className="campaign-data-detail-label">Learned levers</p>
+                <h3>What carries into the next wave</h3>
+                <div className="lever-stat-list">
+                  {leverStats.map((stat) => (
+                    <div key={stat.lever}>
+                      <span><strong>{stat.lever}</strong><small>{stat.value}</small></span>
+                      <span><small>{stat.wins}/{stat.trials} wins</small><strong>{stat.lift}</strong></span>
+                    </div>
+                  ))}
+                </div>
+                <p className="campaign-data-caveat">Four posts provide directional evidence, not statistical significance.</p>
+              </aside>
             </div>
-            <BarChart3 size={21} aria-hidden="true" />
-            <p>Includes cached Monid retrieval, analysis, GPT calls, and generated media for two demo waves.</p>
           </section>
-        </aside>
+        ) : null}
       </div>
     </div>
   );
