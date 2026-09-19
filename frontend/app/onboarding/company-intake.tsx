@@ -18,7 +18,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CompanyMark } from "@/app/ui/company-mark";
-import { backendPost } from "@/lib/backend";
+import { backendPatch, backendPost } from "@/lib/backend";
 import { usePersistedState } from "@/lib/use-persisted-state";
 import { isOnboardingDraft, storageKeys, type OnboardingDraft } from "@/lib/storage-schema";
 
@@ -31,6 +31,19 @@ const suggestedAudiences = [
   "Social media managers at growing brands",
   "Solo marketers building their first content engine",
 ];
+
+type OnboardResponse = {
+  client: { id: string };
+};
+
+function companyNameFromDomain(domain: string) {
+  const label = domain.split(".")[0] || domain;
+  return label
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 const initialDraft: OnboardingDraft = {
   step: 0,
@@ -107,6 +120,7 @@ export function CompanyIntake() {
   const [draft, setDraft] = usePersistedState(storageKeys.onboardingDraft, initialDraft, isOnboardingDraft);
   const { step, discovered, competitors, audiences, competitorInput, audienceInput } = draft;
   const [discovering, setDiscovering] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [discoveryError, setDiscoveryError] = useState("");
   const router = useRouter();
 
@@ -121,10 +135,47 @@ export function CompanyIntake() {
     updateDraft({ [list]: [...items, nextItem], [input]: "" });
   }
 
-  async function discoverMarket() {
+  function websiteDetails() {
     const website = draft.website.trim();
-    if (!website) {
-      setDiscoveryError("Add a company website first.");
+    if (!website) throw new Error("Add a company website first.");
+
+    try {
+      const normalized = website.includes("://") ? website : `https://${website}`;
+      const url = new URL(normalized);
+      if (!url.hostname.includes(".")) throw new Error("invalid hostname");
+      return {
+        website: url.toString(),
+        domain: url.hostname.replace(/^www\./, ""),
+      };
+    } catch {
+      throw new Error("Enter a valid company website.");
+    }
+  }
+
+  async function ensureClient(website: string, domain: string) {
+    if (draft.clientId && draft.onboardedWebsite === website) return draft.clientId;
+
+    const result = await backendPost<OnboardResponse>("/onboard", {
+      name: companyNameFromDomain(domain),
+      website,
+      socials: {
+        linkedin: draft.linkedinUrl,
+        instagram: draft.instagramUrl,
+        reddit: draft.redditUrl,
+        twitter: draft.xUrl,
+      },
+    });
+
+    updateDraft({ clientId: result.client.id, onboardedWebsite: website });
+    return result.client.id;
+  }
+
+  async function discoverMarket() {
+    let details: ReturnType<typeof websiteDetails>;
+    try {
+      details = websiteDetails();
+    } catch (error) {
+      setDiscoveryError(error instanceof Error ? error.message : "Enter a valid company website.");
       return;
     }
 
@@ -132,32 +183,58 @@ export function CompanyIntake() {
     setDiscoveryError("");
 
     try {
-      const normalized = website.includes("://") ? website : `https://${website}`;
-      const domain = new URL(normalized).hostname.replace(/^www\./, "");
-      const result = await backendPost<{ output?: { rows?: Array<{ competitor_domain?: string }> } }>(
-        "/monid/competitors",
-        { domain },
-      );
-      const found = (result.output?.rows ?? [])
+      const [onboardingResult, discoveryResult] = await Promise.allSettled([
+        ensureClient(details.website, details.domain),
+        backendPost<{ output?: { rows?: Array<{ competitor_domain?: string }> } }>(
+          "/monid/competitors",
+          { domain: details.domain },
+        ),
+      ]);
+      const found = (discoveryResult.status === "fulfilled" ? discoveryResult.value.output?.rows ?? [] : [])
         .map((row) => row.competitor_domain?.replace(/^www\./, ""))
         .filter((item): item is string => Boolean(item));
+      const usedFallback = onboardingResult.status === "rejected" || found.length === 0;
 
       updateDraft({
         competitors: found.length ? found : suggestedCompetitors,
         audiences: suggestedAudiences,
         discovered: true,
+        discoverySource: usedFallback ? "fallback" : "live",
       });
-    } catch (error) {
-      setDiscoveryError(error instanceof Error ? error.message : "Market discovery failed.");
+    } catch {
+      updateDraft({
+        competitors: suggestedCompetitors,
+        audiences: suggestedAudiences,
+        discovered: true,
+        discoverySource: "fallback",
+      });
     } finally {
       setDiscovering(false);
     }
   }
 
-  function continueFlow() {
+  async function continueFlow() {
     if (step < steps.length - 1) {
       updateDraft({ step: step + 1 });
       return;
+    }
+
+    setSaving(true);
+    try {
+      const details = websiteDetails();
+      const clientId = await ensureClient(details.website, details.domain);
+      await backendPatch(`/clients/${encodeURIComponent(clientId)}`, {
+        competitors: draft.competitors,
+        icps: draft.audiences,
+        companyContext: draft.companyContext,
+        campaignGoal: {
+          title: draft.goalTitle,
+          description: draft.goalDescription,
+          platforms: draft.platforms,
+        },
+      });
+    } catch {
+      // The persisted onboarding draft is the offline fallback consumed by /research.
     }
     router.push("/research");
   }
@@ -263,6 +340,11 @@ export function CompanyIntake() {
           </div>
         )}
         {discoveryError ? <p className="inline-error" role="alert">{discoveryError}</p> : null}
+        {discovered && draft.discoverySource === "fallback" ? (
+          <p className="inline-notice" role="status">
+            Some live services were unavailable, so Campco filled the gaps with editable sample data. Your draft is still saved locally.
+          </p>
+        ) : null}
       </section>
 
       <section className="flow-step" hidden={step !== 2} aria-labelledby="campaign-step-title">
@@ -317,14 +399,15 @@ export function CompanyIntake() {
           className="button secondary"
           type="button"
           onClick={() => updateDraft({ step: Math.max(0, step - 1) })}
-          disabled={step === 0}
+          disabled={step === 0 || saving}
         >
           <ArrowLeft size={17} aria-hidden="true" /> Back
         </button>
         <span>You can edit these inputs later.</span>
-        <button className="button primary" type="button" onClick={continueFlow}>
-          {step === steps.length - 1 ? "Save and research" : "Continue"}
-          <ArrowRight size={17} aria-hidden="true" />
+        <button className="button primary" type="button" onClick={continueFlow} disabled={discovering || saving}>
+          {saving ? <LoaderCircle className="spin" size={17} aria-hidden="true" /> : null}
+          {saving ? "Saving…" : step === steps.length - 1 ? "Save and research" : "Continue"}
+          {!saving ? <ArrowRight size={17} aria-hidden="true" /> : null}
         </button>
       </footer>
     </form>

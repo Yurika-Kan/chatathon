@@ -1121,6 +1121,17 @@ textarea::placeholder {
   font-weight: 650;
 }
 
+.inline-notice {
+  margin-top: 12px;
+  padding: 11px 13px;
+  border: 1px solid #d9e7aa;
+  border-radius: 9px;
+  color: #526200;
+  background: #f8ffe5;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .spin {
   animation: control-spin 850ms linear infinite;
 }
