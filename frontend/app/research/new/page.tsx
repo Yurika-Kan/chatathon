@@ -1,7 +1,8 @@
-import { ArrowLeft, Building2, Sparkles, Users } from "lucide-react";
+import { ArrowLeft, Building2, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ResearchRunner } from "./research-runner";
 
 export const metadata: Metadata = { title: "New research" };
 
@@ -31,15 +32,10 @@ export default async function NewResearchPage({ searchParams }: { searchParams: 
         </div>
       </header>
 
-      <section className="research-draft-workspace">
-        <div className="research-platform-tags" aria-label="Selected platforms">
-          {platforms.map((platform) => <span key={platform}>{platform}</span>)}
-        </div>
-        <div className="research-draft-empty">
-          <span className="selection-icon lime" aria-hidden="true"><Sparkles size={19} /></span>
-          <strong>Research will appear here.</strong>
-        </div>
-      </section>
+      <div className="research-platform-tags" aria-label="Selected platforms">
+        {platforms.map((platform) => <span key={platform}>{platform}</span>)}
+      </div>
+      <ResearchRunner entityType={entityType} entityName={entityName} platforms={platforms} />
     </div>
   );
 }
