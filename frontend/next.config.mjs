@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/campco.html",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
