@@ -15,8 +15,9 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { CompanyMark } from "@/app/ui/company-mark";
+import { usePersistedState } from "@/lib/use-persisted-state";
+import { isOnboardingDraft, storageKeys, type OnboardingDraft } from "@/lib/storage-schema";
 
 const steps = ["Connect", "Discover", "Campaign"] as const;
 const campaignPlatforms = ["Reddit", "LinkedIn", "Instagram", "X"];
@@ -27,6 +28,24 @@ const suggestedAudiences = [
   "Social media managers at growing brands",
   "Solo marketers building their first content engine",
 ];
+
+const initialDraft: OnboardingDraft = {
+  step: 0,
+  discovered: false,
+  website: "",
+  linkedinUrl: "",
+  instagramUrl: "",
+  redditUrl: "",
+  xUrl: "",
+  companyContext: "",
+  competitors: [],
+  audiences: [],
+  competitorInput: "",
+  audienceInput: "",
+  goalTitle: "",
+  goalDescription: "",
+  platforms: ["Reddit", "LinkedIn", "Instagram"],
+};
 
 function EditableList({
   label,
@@ -82,54 +101,30 @@ function EditableList({
 }
 
 export function CompanyIntake() {
-  const [step, setStep] = useState(0);
-  const [discovered, setDiscovered] = useState(false);
-  const [competitors, setCompetitors] = useState<string[]>([]);
-  const [audiences, setAudiences] = useState<string[]>([]);
-  const [competitorInput, setCompetitorInput] = useState("");
-  const [audienceInput, setAudienceInput] = useState("");
+  const [draft, setDraft] = usePersistedState(storageKeys.onboardingDraft, initialDraft, isOnboardingDraft);
+  const { step, discovered, competitors, audiences, competitorInput, audienceInput } = draft;
   const router = useRouter();
 
-  function addItem(
-    value: string,
-    setValue: (value: string) => void,
-    items: string[],
-    setItems: (value: string[]) => void,
-  ) {
+  function updateDraft(patch: Partial<OnboardingDraft>) {
+    setDraft((current) => ({ ...current, ...patch }));
+  }
+
+  function addItem(value: string, list: "competitors" | "audiences", input: "competitorInput" | "audienceInput") {
     const nextItem = value.trim();
+    const items = draft[list];
     if (!nextItem || items.includes(nextItem)) return;
-    setItems([...items, nextItem]);
-    setValue("");
+    updateDraft({ [list]: [...items, nextItem], [input]: "" });
   }
 
   function discoverMarket() {
-    setCompetitors(suggestedCompetitors);
-    setAudiences(suggestedAudiences);
-    setDiscovered(true);
+    updateDraft({ competitors: suggestedCompetitors, audiences: suggestedAudiences, discovered: true });
   }
 
   function continueFlow() {
     if (step < steps.length - 1) {
-      setStep((current) => current + 1);
+      updateDraft({ step: step + 1 });
       return;
     }
-
-    const form = document.querySelector<HTMLFormElement>(".flow-card");
-    const data = form ? new FormData(form) : null;
-    const platforms = data
-      ? data.getAll("platforms").filter((value): value is string => typeof value === "string")
-      : [];
-
-    sessionStorage.setItem(
-      "campco-onboarding-draft",
-      JSON.stringify({
-        competitors,
-        audiences,
-        platforms,
-        goalTitle: data?.get("goalTitle") ?? "",
-        goalDescription: data?.get("goalDescription") ?? "",
-      }),
-    );
     router.push("/research");
   }
 
@@ -159,25 +154,25 @@ export function CompanyIntake() {
           <span>Company website</span>
           <span className="input-with-icon">
             <Globe2 size={17} aria-hidden="true" />
-            <input name="website" type="url" placeholder="https://yourcompany.com" autoComplete="url" />
+            <input name="website" type="url" placeholder="https://yourcompany.com" autoComplete="url" value={draft.website} onChange={(event) => updateDraft({ website: event.target.value })} />
           </span>
         </label>
         <div className="social-link-grid">
           <label className="field">
             <span><Link2 size={15} aria-hidden="true" /> LinkedIn</span>
-            <input name="linkedinUrl" type="url" placeholder="linkedin.com/company/..." />
+            <input name="linkedinUrl" type="url" placeholder="linkedin.com/company/..." value={draft.linkedinUrl} onChange={(event) => updateDraft({ linkedinUrl: event.target.value })} />
           </label>
           <label className="field">
             <span><AtSign size={15} aria-hidden="true" /> Instagram</span>
-            <input name="instagramUrl" type="url" placeholder="instagram.com/..." />
+            <input name="instagramUrl" type="url" placeholder="instagram.com/..." value={draft.instagramUrl} onChange={(event) => updateDraft({ instagramUrl: event.target.value })} />
           </label>
           <label className="field">
             <span><MessageCircle size={15} aria-hidden="true" /> Reddit</span>
-            <input name="redditUrl" type="url" placeholder="reddit.com/r/..." />
+            <input name="redditUrl" type="url" placeholder="reddit.com/r/..." value={draft.redditUrl} onChange={(event) => updateDraft({ redditUrl: event.target.value })} />
           </label>
           <label className="field">
             <span><span className="text-platform-icon" aria-hidden="true">X</span> X</span>
-            <input name="xUrl" type="url" placeholder="x.com/..." />
+            <input name="xUrl" type="url" placeholder="x.com/..." value={draft.xUrl} onChange={(event) => updateDraft({ xUrl: event.target.value })} />
           </label>
         </div>
         <label className="field">
@@ -186,6 +181,8 @@ export function CompanyIntake() {
             name="companyContext"
             rows={4}
             placeholder="Add positioning, products to prioritize, or anything the public sources may miss."
+            value={draft.companyContext}
+            onChange={(event) => updateDraft({ companyContext: event.target.value })}
           />
         </label>
       </section>
@@ -214,9 +211,9 @@ export function CompanyIntake() {
               items={competitors}
               input={competitorInput}
               placeholder="Add a company or URL"
-              setInput={setCompetitorInput}
-              onAdd={() => addItem(competitorInput, setCompetitorInput, competitors, setCompetitors)}
-              onRemove={(item) => setCompetitors(competitors.filter((entry) => entry !== item))}
+              setInput={(value) => updateDraft({ competitorInput: value })}
+              onAdd={() => addItem(competitorInput, "competitors", "competitorInput")}
+              onRemove={(item) => updateDraft({ competitors: competitors.filter((entry) => entry !== item) })}
             />
             <EditableList
               label="Audience groups"
@@ -224,9 +221,9 @@ export function CompanyIntake() {
               items={audiences}
               input={audienceInput}
               placeholder="Describe another audience"
-              setInput={setAudienceInput}
-              onAdd={() => addItem(audienceInput, setAudienceInput, audiences, setAudiences)}
-              onRemove={(item) => setAudiences(audiences.filter((entry) => entry !== item))}
+              setInput={(value) => updateDraft({ audienceInput: value })}
+              onAdd={() => addItem(audienceInput, "audiences", "audienceInput")}
+              onRemove={(item) => updateDraft({ audiences: audiences.filter((entry) => entry !== item) })}
             />
           </div>
         )}
@@ -239,7 +236,7 @@ export function CompanyIntake() {
         </div>
         <label className="field">
           <span>Campaign title</span>
-          <input name="goalTitle" placeholder="e.g. Launch our new team plan" />
+          <input name="goalTitle" placeholder="e.g. Launch our new team plan" value={draft.goalTitle} onChange={(event) => updateDraft({ goalTitle: event.target.value })} />
         </label>
         <label className="field campaign-description-field">
           <span>Description</span>
@@ -247,19 +244,26 @@ export function CompanyIntake() {
             name="goalDescription"
             rows={8}
             placeholder="What are you trying to achieve, what are you promoting, and what should change for the audience?"
+            value={draft.goalDescription}
+            onChange={(event) => updateDraft({ goalDescription: event.target.value })}
           />
         </label>
         <fieldset className="platform-fieldset campaign-platforms">
           <legend>Platforms to research for this campaign</legend>
           <p>Choose where Campco should compare competitors and audience behavior.</p>
           <div className="platform-grid research-platform-grid">
-            {campaignPlatforms.map((platform, index) => (
+            {campaignPlatforms.map((platform) => (
               <label className="platform-option" key={platform}>
                 <input
                   type="checkbox"
                   name="platforms"
                   value={platform}
-                  defaultChecked={index < 3}
+                  checked={draft.platforms.includes(platform)}
+                  onChange={(event) => updateDraft({
+                    platforms: event.target.checked
+                      ? [...draft.platforms, platform]
+                      : draft.platforms.filter((item) => item !== platform),
+                  })}
                 />
                 <span>{platform}</span>
               </label>
@@ -276,7 +280,7 @@ export function CompanyIntake() {
         <button
           className="button secondary"
           type="button"
-          onClick={() => setStep((current) => Math.max(0, current - 1))}
+          onClick={() => updateDraft({ step: Math.max(0, step - 1) })}
           disabled={step === 0}
         >
           <ArrowLeft size={17} aria-hidden="true" /> Back
