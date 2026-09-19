@@ -23,17 +23,17 @@ Anyone responsible for a company's marketing: founders, in-house marketers, or m
 ## How It Works
 
 ### 1. Onboarding
-- User signs up and provides their **company name**.
+- User signs up and provides their **company website** plus optional **Instagram, LinkedIn, X, and Reddit** URLs.
 - They select which of the four supported platforms they want to run campaigns on: **Instagram, LinkedIn, X, Reddit**.
-- The system looks up their profiles on those platforms and pulls in their product page, website, and social presence.
-- An LLM expands on this raw data (with **Monid** — an API/MCP tool aggregator for social scraping — doing the underlying data collection) to figure out what the company actually does.
+- The system pulls in their product page, website, and social presence.
+- An LLM expands on this raw data (with **Monid** doing the underlying data collection) to figure out what the company actually does, and to propose competitors and audience groups.
 - The user reviews/checks off what's correct before moving on.
 
 ### 2. Creating a Campaign
 - User describes the campaign: what they're trying to market, the goal, and a **campaign calendar** (start/end dates).
 - The system recommends:
   - **Audiences** to target
-  - **Similar companies / competitors** in the space
+  - **Similar companies / competitors** in the space (via Monid, e.g. Ahrefs organic competitors from the company domain)
 - The user can add, remove, or manually attach new audiences and data sources at this stage.
 - **Writing style** is inferred automatically from the company's own past posts and/or competitor posts — no manual style guide needed.
 
@@ -46,7 +46,7 @@ Anyone responsible for a company's marketing: founders, in-house marketers, or m
 - For each selected campaign, the system drafts media suited to the platform(s) chosen for that campaign.
 
 ### 4. Approval, Publishing & A/B Testing
-- Once a campaign is approved, Camco:
+- Once a campaign is approved, Campco:
   1. Publishes the drafted media in waves (**simulated/mocked for this demo** — no live posting to real platforms yet).
   2. Collects performance analytics on each wave.
   3. **A/B tests**: e.g., 4 pieces of media per wave — 2 as "version A," 2 as "version B" — all four go out, analytics come back, and the next wave is refined using those insights.
@@ -61,7 +61,7 @@ Anyone responsible for a company's marketing: founders, in-house marketers, or m
 ### 6. Research Page (standalone)
 - Independent of the campaign flow, built on the same underlying infrastructure.
 - Lets a user select any companies or audiences and see what's trending in their content, without needing to run a campaign.
-- Reuses the same "analyze a company" / "analyze an audience" building blocks as the main product.
+- Reuses the same `POST /analyze/company` and `POST /analyze/audience` building blocks as the main product.
 
 ---
 
@@ -75,16 +75,16 @@ flowchart TB
 
     Scheduler["Scheduler<br/>setInterval loop in the same<br/>Node app · compressed time<br/>(1 'day' ≈ a few seconds)"]
 
-    API["API Layer (Node)<br/>/api/company · /api/campaign<br/>/api/media · /api/dashboard · /api/research<br/>single Node service"]
+    API["Express API (Firebase function `api`)<br/>/company · /campaign · /analyze<br/>/dashboard · /monid"]
 
-    Monid["Monid (API + MCP)<br/>agentic discovery + deterministic fetch<br/>IG · LinkedIn · X · Reddit · web"]
+    Monid["Monid CLI (`runEndpoint`)<br/>provider + endpoint fetch<br/>IG · LinkedIn · X · Reddit · web · Ahrefs"]
     GPT["GPT (text)<br/>cluster labeling, pitch writing,<br/>copy generation · structured JSON"]
     Media["Image-gen model<br/>Video-gen model<br/>(media drafting)"]
     Analysis["Analysis Engine (Node)<br/>normalize → embed → cluster →<br/>trend/gap/viral scoring →<br/>lever attribution"]
 
     DB[("Firebase / Firestore<br/>raw cache · derived corpus ·<br/>campaigns · learning state")]
 
-    UI -- "REST (Next.js API routes)" --> API
+    UI -- "REST" --> API
     Scheduler -- "checks nextWaveAt,<br/>triggers wave" --> API
     API --> Monid
     API --> Analysis
@@ -107,6 +107,7 @@ flowchart TB
 
 ### Design decisions for this build
 - **No separate Python service.** Originally scoped as Node + Python, but for the hackathon everything lives in Node — simplest path to a working demo.
+- **One API, not two.** Next.js talks to a single Express app mounted as the Firebase `api` function. No Next.js API routes duplicating the same resources.
 - **No auth.** Skipped entirely for the demo; would be Firebase Auth in a real build.
 - **Simple in-process scheduler, not a real queue.** A `setInterval` loop running inside the same Node app checks every campaign's `nextWaveAt` timestamp and fires the next wave when it's due. Time is **compressed for the demo** — a "day" between waves is a few seconds — so judges can watch multiple refinement cycles happen live instead of waiting. A real version would replace this with Cloud Tasks/Celery/a proper worker and real-world timing.
 - **Publishing is mocked.** No real Instagram/LinkedIn/X/Reddit API calls — publish step fabricates plausible analytics instead.
@@ -115,24 +116,24 @@ flowchart TB
 
 ### Monid: how data collection actually works
 
-Monid is a **tool router** — one key, one integration, access to 200+ underlying tools (social scrapers, search, web extraction) with built-in budget controls and MCP support. Camco leans on it so the team never writes or maintains four separate platform scrapers.
+Monid is a **tool router** — one key, one CLI, access to 200+ underlying tools (social scrapers, search, web extraction, SEO) with built-in budget controls. Campco never writes or maintains four separate platform scrapers.
 
-Camco uses it in **two distinct modes**:
+Every Monid call goes through the same wrapper: `runEndpoint(provider, endpoint, { query, body, path })` → `monid run -p <provider> -e <endpoint>`. The Express app exposes those fetches (and the product routes that use them). Discovery does not need MCP: if handles or competitors are unknown, GPT chooses provider + endpoint + params, then Node runs that endpoint. After that, code calls a known endpoint directly.
 
-| Mode | When | Why |
+| Kind of call | When | Why |
 |---|---|---|
-| **Agentic (MCP)** | Onboarding discovery, competitor/audience discovery | We don't know the handles or which tool to use yet. The LLM gets Monid's MCP tools and figures out "find this company's Instagram/LinkedIn/X/Reddit presence" itself, choosing and chaining tools. |
-| **Deterministic (API)** | Every fetch after discovery | Once we have a resolved handle, we call a known endpoint directly. Cheaper, faster, cacheable, and no LLM in the loop for something that doesn't need judgment. |
+| **Discovery** | Onboarding, competitor/audience suggestions | Website/domain in, GPT or code picks the Monid endpoint (e.g. Ahrefs organic competitors). Same `runEndpoint` path. |
+| **Fetch** | Every pull after handles exist | Known provider + endpoint. Cheaper, faster, cacheable, and no LLM in the loop for something that doesn't need judgment. |
 
 **Fetch plan per stage:**
 
 | Stage | What Monid pulls | Approx. calls |
 |---|---|---|
 | Onboarding | Company profiles on 4 platforms, website + product page extraction, last ~50 own posts per platform | ~10–15 |
-| Competitor discovery | Search → candidate competitors → profile lookups | ~5–10 |
+| Competitor discovery | Domain → candidate competitors (`POST /monid/competitors`) → profile lookups | ~5–10 |
 | Competitor corpus | Last ~50 posts per competitor per relevant platform | ~4 per competitor |
 | Audience corpus | Subreddit/hashtag/topic-level posts + comments for each audience | ~5 per audience |
-| Research page | Same two primitives (analyze-company / analyze-audience), hitting the same cache | varies |
+| Research page | Same two primitives (`/analyze/company`, `/analyze/audience`), hitting the same cache | varies |
 
 **Caching is the load-bearing design choice.** Scraping is the slowest and most expensive step, and the research page, onboarding, and every campaign all want the *same* underlying data. So:
 
@@ -146,7 +147,7 @@ Camco uses it in **two distinct modes**:
 
 ### AI analysis: what's actually computed vs. generated
 
-The weakest version of this product is "throw scraped posts at GPT and ask what's trending." Camco splits it deliberately: **math narrows, the LLM explains.**
+The weakest version of this product is "throw scraped posts at GPT and ask what's trending." Campco splits it deliberately: **math narrows, the LLM explains.**
 
 #### Step 0 — Normalize everything into one corpus
 
@@ -177,7 +178,7 @@ Each candidate gets a score and the **evidence post IDs that produced it**. This
 
 #### Step 3 — LLM writes the pitch, not the finding
 
-Top-scoring candidates go to GPT, which turns each into a campaign suggestion: the angle, why it fits this company, and the rationale — grounded in the evidence posts it was handed. Output is **typed JSON against a fixed schema** (every LLM call in Camco is structured output; nothing is parsed out of prose).
+Top-scoring candidates go to GPT, which turns each into a campaign suggestion: the angle, why it fits this company, and the rationale — grounded in the evidence posts it was handed. Output is **typed JSON against a fixed schema** (every LLM call in Campco is structured output; nothing is parsed out of prose).
 
 #### Step 4 — Style inference
 
@@ -247,43 +248,59 @@ Deliberately split into **raw → derived → campaign → learning** layers, so
 
 ### API surface
 
-All Next.js API routes. Long-running research is kicked off and polled rather than blocking a request.
+Single Express app, exported as Firebase function `api`.
 
-**Onboarding & research primitives** (shared with the research page)
+- Local: `http://localhost:5001/chatathon-2026/us-central1/api`
+- Prod: `https://us-central1-chatathon-2026.cloudfunctions.net/api`
+
+Long-running research is kicked off and polled rather than blocking a request. The research page and campaign research both call `/analyze/*`; they do not have a third parallel research API. Media lives under campaign waves, not a separate `/media` root. Competitor lookup is `/monid/competitors`, used by onboarding and campaign create.
+
+**Monid fetches**
 
 | Route | Does |
 |---|---|
-| `POST /api/company/resolve` | Company name + platforms → Monid MCP discovery of handles, site/product extraction → draft profile for user confirmation |
-| `POST /api/company/:id/confirm` | User-corrected profile → triggers own-post corpus fetch + `styleProfile` extraction |
-| `POST /api/analyze/company` | Core primitive: fetch (or cache-hit) an account's corpus → normalize → embed → topics |
-| `POST /api/analyze/audience` | Core primitive: same, for an audience/subreddit/hashtag |
-| `GET /api/research?entities=...` | Research page. Calls the two primitives above, reads the same `topics`/`signals` — zero campaign coupling |
+| `GET /health` | Liveness |
+| `POST /monid/competitors` | Domain → organic competitors (Ahrefs). Onboarding/campaign discovery uses this instead of a second competitor API. |
+
+**Onboarding**
+
+| Route | Does |
+|---|---|
+| `POST /company/resolve` | Website + optional social URLs + platforms → Monid fetches (site/product extraction, profiles, `/monid/competitors`) → draft profile for user confirmation |
+| `POST /company/:id/confirm` | User-corrected profile → own-post corpus via `/analyze/company` + `styleProfile` extraction |
+
+**Analyze primitives** (research page and campaigns)
+
+| Route | Does |
+|---|---|
+| `POST /analyze/company` | Fetch (or cache-hit) an account's corpus → normalize → embed → topics |
+| `POST /analyze/audience` | Same, for an audience/subreddit/hashtag |
 
 **Campaign lifecycle**
 
 | Route | Does |
 |---|---|
-| `POST /api/campaign` | Create: goal, calendar, platforms. Returns recommended audiences + competitors for user editing |
-| `PATCH /api/campaign/:id/scope` | Add/remove audiences, competitors, data sources |
-| `POST /api/campaign/:id/research` | Kicks off corpus build across scope → returns `runId` |
-| `GET /api/campaign/:id/research/status` | Poll: progress, cache hit rate, cost so far |
-| `GET /api/campaign/:id/suggestions` | Runs the three detectors → LLM pitches → suggestion cards with evidence posts attached |
-| `POST /api/campaign/:id/approve` | Select suggestions → generate wave 1 media (copy + visuals, lever-assigned) → set `nextWaveAt` |
+| `POST /campaign` | Create: goal, calendar, platforms. Recommends audiences + competitors (via `/monid/competitors`) for user editing |
+| `PATCH /campaign/:id/scope` | Add/remove audiences, competitors, data sources |
+| `POST /campaign/:id/research` | Orchestrates `/analyze/company` and `/analyze/audience` across campaign scope → returns `runId` |
+| `GET /campaign/:id/research/status` | Poll: progress, cache hit rate, cost so far |
+| `GET /campaign/:id/suggestions` | Runs the three detectors → LLM pitches → suggestion cards with evidence posts attached |
+| `POST /campaign/:id/approve` | Select suggestions → generate wave 1 media (copy + visuals, lever-assigned) → set `nextWaveAt` |
 
 **The loop** (scheduler-driven, not user-facing)
 
 | Route | Does |
 |---|---|
-| `POST /api/campaign/:id/wave/publish` | Mock-publishes the due wave. Idempotent on `waveNumber` so a scheduler retry can't double-post |
-| `POST /api/campaign/:id/wave/collect` | Generates mock analytics for published media |
-| `POST /api/campaign/:id/wave/refine` | Attributes results per lever → updates `leverStats` → generates the next wave biased toward winners → sets `nextWaveAt` |
-| `POST /api/campaign/:id/pause` · `/resume` | Demo control over the scheduler |
+| `POST /campaign/:id/wave/publish` | Mock-publishes the due wave. Idempotent on `waveNumber` so a scheduler retry can't double-post |
+| `POST /campaign/:id/wave/collect` | Generates mock analytics for published media |
+| `POST /campaign/:id/wave/refine` | Attributes results per lever → updates `leverStats` → generates the next wave biased toward winners → sets `nextWaveAt` |
+| `POST /campaign/:id/pause` · `/resume` | Demo control over the scheduler |
 
 **Dashboard**
 
 | Route | Does |
 |---|---|
-| `GET /api/dashboard` | Cross-campaign performance, wave-over-wave lift, top lever findings, and spend rolled up from `runs` |
+| `GET /dashboard` | Cross-campaign performance, wave-over-wave lift, top lever findings, and spend rolled up from `runs` |
 
 ---
 
@@ -292,9 +309,9 @@ All Next.js API routes. Long-running research is kicked off and polled rather th
 | Layer | Choice |
 |---|---|
 | Frontend | Next.js / React |
-| Backend | Node (single service — Python dropped for this build) |
+| Backend | Express on Firebase Cloud Functions (Node 22) |
 | Database | Firebase / Firestore |
-| Data collection | Monid (API + MCP) — agentic discovery, then deterministic cached fetch |
+| Data collection | Monid CLI via `runEndpoint` — GPT picks endpoints for discovery, then cached deterministic fetch |
 | Topic extraction | Embeddings + clustering (LLM labels clusters only) |
 | Text / pitch / copy LLM | GPT, structured JSON output on every call |
 | Image generation | Dedicated image-gen model |
