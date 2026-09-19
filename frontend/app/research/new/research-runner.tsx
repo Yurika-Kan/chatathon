@@ -9,7 +9,17 @@ type RunState = {
   status: "loading" | "success" | "error";
   records?: unknown[];
   error?: string;
+  source?: "live" | "fallback";
 };
+
+function fallbackRecords(entityType: ResearchEntityType, entityName: string, platform: string) {
+  const subject = entityType === "company" ? `${entityName}'s category` : entityName;
+  return [
+    `Sample trend: ${subject} is responding to concise, native ${platform} posts that lead with one concrete takeaway.`,
+    `Sample gap: competing content often explains features without showing a specific before-and-after outcome.`,
+    `Sample opportunity: test a proof-led hook for ${entityName}, then compare it with a direct question aimed at the same audience.`,
+  ];
+}
 
 function requestFor(platform: string, entityName: string) {
   switch (platform.toLowerCase()) {
@@ -75,22 +85,23 @@ export function ResearchRunner({
     await Promise.all(platforms.map(async (platform) => {
       try {
         const request = requestFor(platform, entityName);
-        const payload = await backendPost<unknown>(request.path, request.body);
+        const payload = await backendPost<unknown>(request.path, request.body, { timeoutMs: 8_000 });
         setRuns((current) => ({
           ...current,
-          [platform]: { status: "success", records: recordsFrom(payload) },
+          [platform]: { status: "success", records: recordsFrom(payload), source: "live" },
         }));
-      } catch (error) {
+      } catch {
         setRuns((current) => ({
           ...current,
           [platform]: {
-            status: "error",
-            error: error instanceof Error ? error.message : "Research failed.",
+            status: "success",
+            records: fallbackRecords(entityType, entityName, platform),
+            source: "fallback",
           },
         }));
       }
     }));
-  }, [entityName, platforms]);
+  }, [entityName, entityType, platforms]);
 
   useEffect(() => {
     if (started.current) return;
@@ -119,7 +130,8 @@ export function ResearchRunner({
               <header>
                 <h2>{platform}</h2>
                 {run.status === "loading" ? <LoaderCircle className="spin" size={18} aria-label="Loading" /> : null}
-                {run.status === "success" ? <CheckCircle2 size={18} aria-label="Complete" /> : null}
+                {run.status === "success" && run.source !== "fallback" ? <CheckCircle2 size={18} aria-label="Complete" /> : null}
+                {run.status === "success" && run.source === "fallback" ? <AlertCircle size={18} aria-label="Sample results" /> : null}
                 {run.status === "error" ? <AlertCircle size={18} aria-label="Failed" /> : null}
               </header>
 
@@ -128,6 +140,7 @@ export function ResearchRunner({
               {run.status === "success" ? (
                 records.length ? (
                   <>
+                    {run.source === "fallback" ? <p>Live research timed out. Showing editable sample findings.</p> : null}
                     <strong className="research-result-count">{records.length} results</strong>
                     <ul>
                       {records.slice(0, 4).map((record, index) => (
