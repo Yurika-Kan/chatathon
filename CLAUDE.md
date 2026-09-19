@@ -48,6 +48,40 @@ The backend uses the Monid CLI (`@monid-ai/cli`) as a data layer for scraping so
 - **Credentials bootstrap**: on first call in Cloud Functions, the wrapper writes `~/.config/monid/credentials.yaml` from the `MONID_KEY` env var.
 - **Available providers**: Ahrefs (SEO/competitors), Apify (Reddit, Instagram), TikHub (Twitter, LinkedIn), MrScraper (website extraction).
 
+## Firestore (database)
+
+Database module lives in `backend/db.js`. Uses `firebase-admin` — no client SDK.
+
+**Collection: `clients`**
+
+```js
+{
+  id: "auto-generated",
+  name: "Campco Coffee",
+  website: "https://campcocoffee.com",
+  socials: {
+    linkedin:  { url: "https://www.linkedin.com/company/campco", handle: "campco" } | null,
+    instagram: { url: "https://www.instagram.com/campcocoffee", handle: "campcocoffee" } | null,
+    twitter:   { url: "https://x.com/campcocoffee", handle: "campcocoffee" } | null,
+    reddit:    { url: "https://www.reddit.com/r/coffee", handle: "coffee" } | null
+  },
+  competitors: [],
+  icps: [],
+  createdAt: Timestamp
+}
+```
+
+**Usage in backend code:**
+```js
+const { createClient, getClient, updateClient, listClients } = require("./db");
+const client = await createClient({ name, website, socials });
+const client = await getClient(id);
+const client = await updateClient(id, { competitors: [...] });
+const all = await listClients();
+```
+
+Firestore rules (`firestore.rules`) are fully open read/write for the hackathon. Deploy rules with `firebase deploy --only firestore:rules`.
+
 ## Backend API endpoints
 
 Base URL (production): `https://us-central1-chatathon-2026.cloudfunctions.net/api`
@@ -55,7 +89,16 @@ Base URL (production): `https://us-central1-chatathon-2026.cloudfunctions.net/ap
 | Method | Path | Input | Returns |
 |--------|------|-------|---------|
 | GET | `/health` | — | `{ status: "ok" }` |
-| POST | `/monid/competitors` | `{ domain, country? }` | Ahrefs organic competitors (top 5, generic domains filtered out) |
+| POST | `/onboard` | `{ name, website, socials? }` | Creates client with normalized social links `{ url, handle }` |
+| POST | `/clients` | `{ name, website, socials? }` | Creates a client (raw, no normalization) |
+| GET | `/clients` | — | List all clients |
+| GET | `/clients/:id` | — | Get one client |
+| PATCH | `/clients/:id` | any fields | Update a client |
+| POST | `/monid/competitors` | `{ domain, country? }` | Ahrefs organic competitors (top 5, filtered) |
+| POST | `/monid/reddit` | `{ searches[], sort?, time?, maxItems? }` | Reddit posts by keyword |
+| POST | `/monid/linkedin` | `{ searchQueries[], maxPosts?, postedLimit? }` | LinkedIn posts by keyword |
+| POST | `/monid/twitter` | `{ searchTerms[], maxItems?, sort? }` | Tweets by keyword |
+| POST | `/monid/instagram` | `{ hashtags[], keywordSearch?, resultsLimit? }` | Instagram posts by hashtag/keyword |
 
 ## Rules
 
