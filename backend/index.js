@@ -2,6 +2,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const express = require("express");
 const cors = require("cors");
 const { runEndpoint } = require("./monid");
+const { createClient, getClient, updateClient, listClients } = require("./db");
 
 const app = express();
 app.use(cors({ origin: true }));
@@ -9,6 +10,162 @@ app.use(express.json());
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+/*
+ * POST /clients
+ * Create a new client.
+ * Body: { name, website, socials?: { linkedin?, instagram?, twitter?, reddit? } }
+ * Returns: the created client object with id
+ */
+app.post("/clients", async (req, res) => {
+  const { name, website, socials } = req.body;
+  if (!name || !website) return res.status(400).json({ error: "name and website are required" });
+
+  try {
+    const client = await createClient({ name, website, socials });
+    res.status(201).json(client);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/*
+ * GET /clients
+ * List all clients.
+ */
+app.get("/clients", async (req, res) => {
+  try {
+    const all = await listClients();
+    res.json(all);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/*
+ * GET /clients/:id
+ * Get a single client by id.
+ */
+app.get("/clients/:id", async (req, res) => {
+  try {
+    const client = await getClient(req.params.id);
+    if (!client) return res.status(404).json({ error: "client not found" });
+    res.json(client);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/*
+ * PATCH /clients/:id
+ * Update a client. Body can include any fields: name, website, socials, competitors, icps
+ */
+app.patch("/clients/:id", async (req, res) => {
+  try {
+    const client = await updateClient(req.params.id, req.body);
+    if (!client) return res.status(404).json({ error: "client not found" });
+    res.json(client);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+function normalizeSocial(platform, raw) {
+  if (!raw) return null;
+  const val = raw.trim().replace(/\/+$/, "");
+
+  switch (platform) {
+    case "linkedin": {
+      // Accept full URL or just slug like "campco" or "company/campco"
+      if (val.includes("linkedin.com")) {
+        const match = val.match(/linkedin\.com\/company\/([^/?]+)/);
+        return {
+          url: val.startsWith("http") ? val : `https://${val}`,
+          handle: match ? match[1] : val.split("/").pop(),
+        };
+      }
+      const slug = val.replace(/^company\//, "");
+      return {
+        url: `https://www.linkedin.com/company/${slug}`,
+        handle: slug,
+      };
+    }
+    case "instagram": {
+      if (val.includes("instagram.com")) {
+        const handle = val.split("/").filter(Boolean).pop();
+        return { url: `https://www.instagram.com/${handle}`, handle };
+      }
+      const handle = val.replace(/^@/, "");
+      return { url: `https://www.instagram.com/${handle}`, handle };
+    }
+    case "twitter": {
+      if (val.includes("twitter.com") || val.includes("x.com")) {
+        const handle = val.split("/").filter(Boolean).pop();
+        return { url: `https://x.com/${handle}`, handle };
+      }
+      const handle = val.replace(/^@/, "");
+      return { url: `https://x.com/${handle}`, handle };
+    }
+    case "reddit": {
+      if (val.includes("reddit.com")) {
+        const match = val.match(/r\/([^/?]+)/);
+        const sub = match ? match[1] : val.split("/").filter(Boolean).pop();
+        return { url: `https://www.reddit.com/r/${sub}`, handle: sub };
+      }
+      const sub = val.replace(/^r\//, "");
+      return { url: `https://www.reddit.com/r/${sub}`, handle: sub };
+    }
+    default:
+      return null;
+  }
+}
+
+/*
+ * POST /onboard
+ * Registers a new client with normalized social links.
+ * Body:
+ *   name: string              — company name (required)
+ *   website: string           — company website URL (required)
+ *   socials: {                — accepts handles, @handles, or full URLs
+ *     linkedin?: string       — e.g. "campco", "company/campco", or full URL
+ *     instagram?: string      — e.g. "campcocoffee", "@campcocoffee", or full URL
+ *     twitter?: string        — e.g. "campcocoffee", "@campcocoffee", or full URL
+ *     reddit?: string         — e.g. "coffee", "r/coffee", or full URL
+ *   }
+ *
+ * Response: {
+ *   client: {
+ *     id, name, website,
+ *     socials: {
+ *       linkedin:  { url, handle } | null,
+ *       instagram: { url, handle } | null,
+ *       twitter:   { url, handle } | null,
+ *       reddit:    { url, handle } | null
+ *     },
+ *     competitors: [], icps: [], createdAt
+ *   }
+ * }
+ */
+app.post("/onboard", async (req, res) => {
+  const { name, website, socials } = req.body;
+  if (!name || !website) return res.status(400).json({ error: "name and website are required" });
+
+  try {
+    const client = await createClient({
+      name,
+      website: website.startsWith("http") ? website : `https://${website}`,
+      socials: {
+        linkedin: normalizeSocial("linkedin", socials?.linkedin),
+        instagram: normalizeSocial("instagram", socials?.instagram),
+        twitter: normalizeSocial("twitter", socials?.twitter),
+        reddit: normalizeSocial("reddit", socials?.reddit),
+      },
+    });
+    res.status(201).json({ client });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post("/monid/competitors", async (req, res) => {
