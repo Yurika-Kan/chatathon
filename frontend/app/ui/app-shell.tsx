@@ -1,13 +1,22 @@
 "use client";
 
-import { Building2, FlaskConical, Layers3, Sparkles } from "lucide-react";
+import {
+  Building2,
+  FlaskConical,
+  Layers3,
+  LayoutDashboard,
+  Megaphone,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 const navigation = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/onboarding", label: "Your company", icon: Building2 },
   { href: "/research", label: "Research", icon: FlaskConical },
+  { href: "/campaign", label: "Campaign", icon: Megaphone },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -16,7 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <Link className="brand" href="/onboarding" aria-label="Campco home">
+        <Link className="brand" href="/dashboard" aria-label="Campco home">
           <span className="brand-mark" aria-hidden="true">
             <Sparkles size={17} strokeWidth={2.3} />
           </span>
