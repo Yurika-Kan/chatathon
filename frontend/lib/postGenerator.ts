@@ -9,9 +9,11 @@ import type {
   Suggestion,
 } from "@/lib/suggestions";
 
-const client = new OpenAI();
-
 const MODEL = "gpt-5.6-sol";
+
+function openAI() {
+  return new OpenAI();
+}
 
 // video is a valid lever value in LEVERS.format (leverStats/other code may still
 // reference it), but no renderer exists for it here yet (see lib/render.ts).
@@ -174,7 +176,7 @@ export async function generateWaveMedia({
 }: GenerateWaveArgs): Promise<Wave> {
   const evidence = resolveEvidence(suggestion, research);
 
-  const response = await client.responses.parse({
+  const response = await openAI().responses.parse({
     model: MODEL,
     input: [
       { role: "system", content: SYSTEM },

@@ -5,15 +5,24 @@ import { useRouter } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { CompanyMark } from "@/app/ui/company-mark";
+import { readStoredValue } from "@/lib/browser-storage";
 import type { ResearchEntityType } from "@/lib/research";
-
-type OnboardingDraft = {
-  competitors?: string[];
-  audiences?: string[];
-  platforms?: string[];
-};
+import { isOnboardingDraft, isResearchDraft, storageKeys, type ResearchDraft } from "@/lib/storage-schema";
+import { usePersistedState } from "@/lib/use-persisted-state";
 
 const platformOptions = ["Reddit", "LinkedIn", "Instagram", "X"];
+
+const initialDraft: ResearchDraft = {
+  platforms: ["Reddit", "LinkedIn", "Instagram"],
+  companies: ["Amazon", "Google", "Duolingo"],
+  audiences: ["Women ages 18–20 based in Texas"],
+  companyInput: "",
+  audienceInput: "",
+  goalTitle: "",
+  goalDescription: "",
+  submitted: false,
+  initializedFromOnboarding: false,
+};
 
 function EntityList({
   icon,
@@ -96,26 +105,28 @@ function EntityList({
 
 export function ResearchBuilder() {
   const router = useRouter();
-  const [platforms, setPlatforms] = useState<string[]>(["Reddit", "LinkedIn", "Instagram"]);
-  const [companies, setCompanies] = useState<string[]>(["Amazon", "Google", "Duolingo"]);
-  const [audiences, setAudiences] = useState<string[]>(["Women ages 18–20 based in Texas"]);
-  const [companyInput, setCompanyInput] = useState("");
-  const [audienceInput, setAudienceInput] = useState("");
+  const [draft, setDraft, hydrated] = usePersistedState(storageKeys.researchDraft, initialDraft, isResearchDraft);
+  const { platforms, companies, audiences, companyInput, audienceInput } = draft;
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const storedDraft = sessionStorage.getItem("campco-onboarding-draft");
-    if (!storedDraft) return;
+  function updateDraft(patch: Partial<ResearchDraft>) {
+    setDraft((current) => ({ ...current, ...patch }));
+  }
 
-    try {
-      const draft = JSON.parse(storedDraft) as OnboardingDraft;
-      if (draft.competitors?.length) setCompanies(draft.competitors);
-      if (draft.audiences?.length) setAudiences(draft.audiences);
-      if (draft.platforms?.length) setPlatforms(draft.platforms);
-    } catch {
-      sessionStorage.removeItem("campco-onboarding-draft");
-    }
-  }, []);
+  useEffect(() => {
+    if (!hydrated || draft.initializedFromOnboarding) return;
+    void readStoredValue(storageKeys.onboardingDraft, isOnboardingDraft).then((onboarding) => {
+      setDraft((current) => ({
+        ...current,
+        companies: onboarding?.competitors.length ? onboarding.competitors : current.companies,
+        audiences: onboarding?.audiences.length ? onboarding.audiences : current.audiences,
+        platforms: onboarding?.platforms.length ? onboarding.platforms : current.platforms,
+        goalTitle: onboarding?.goalTitle || current.goalTitle,
+        goalDescription: onboarding?.goalDescription || current.goalDescription,
+        initializedFromOnboarding: true,
+      }));
+    });
+  }, [draft.initializedFromOnboarding, hydrated, setDraft]);
 
   function addItem(
     event: FormEvent,
@@ -156,9 +167,11 @@ export function ResearchBuilder() {
                 type="checkbox"
                 checked={platforms.includes(platform)}
                 onChange={(event) => {
-                  setPlatforms(event.target.checked
-                    ? [...platforms, platform]
-                    : platforms.filter((item) => item !== platform));
+                  updateDraft({
+                    platforms: event.target.checked
+                      ? [...platforms, platform]
+                      : platforms.filter((item) => item !== platform),
+                  });
                   setError("");
                 }}
               />
@@ -183,9 +196,9 @@ export function ResearchBuilder() {
           items={companies}
           input={companyInput}
           placeholder="Add company name or URL"
-          setInput={setCompanyInput}
-          onAdd={(event) => addItem(event, companyInput, setCompanyInput, companies, setCompanies)}
-          onRemove={(item) => setCompanies(companies.filter((entry) => entry !== item))}
+          setInput={(value) => updateDraft({ companyInput: value })}
+          onAdd={(event) => addItem(event, companyInput, (value) => updateDraft({ companyInput: value }), companies, (value) => updateDraft({ companies: value }))}
+          onRemove={(item) => updateDraft({ companies: companies.filter((entry) => entry !== item) })}
           onStart={startResearch}
         />
         <EntityList
@@ -195,9 +208,9 @@ export function ResearchBuilder() {
           items={audiences}
           input={audienceInput}
           placeholder="Add an audience"
-          setInput={setAudienceInput}
-          onAdd={(event) => addItem(event, audienceInput, setAudienceInput, audiences, setAudiences)}
-          onRemove={(item) => setAudiences(audiences.filter((entry) => entry !== item))}
+          setInput={(value) => updateDraft({ audienceInput: value })}
+          onAdd={(event) => addItem(event, audienceInput, (value) => updateDraft({ audienceInput: value }), audiences, (value) => updateDraft({ audiences: value }))}
+          onRemove={(item) => updateDraft({ audiences: audiences.filter((entry) => entry !== item) })}
           onStart={startResearch}
         />
       </div>
