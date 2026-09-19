@@ -1,7 +1,8 @@
-const admin = require("firebase-admin");
+const { initializeApp, getApps } = require("firebase-admin/app");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
-if (!admin.apps.length) admin.initializeApp();
-const db = admin.firestore();
+if (!getApps().length) initializeApp();
+const db = getFirestore();
 
 const clients = db.collection("clients");
 
@@ -14,7 +15,7 @@ async function createClient({ name, website, socials }) {
     socials: socials || {},
     competitors: [],
     icps: [],
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   };
   await ref.set(client);
   return client;
