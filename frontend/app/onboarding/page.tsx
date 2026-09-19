@@ -9,8 +9,8 @@ export default function OnboardingPage() {
     <div className="page onboarding-page">
       <PageHeader
         eyebrow="First-time setup"
-        title="Teach Campco about your company."
-        description="Give the system enough source material to research your market and create work that sounds like your business."
+        title="Connect your company to Campco."
+        description="Start with the company website and social presence. Campco will propose competitors and audience groups before you define the first campaign goal."
       />
       <CompanyIntake />
     </div>

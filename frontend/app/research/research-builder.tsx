@@ -4,206 +4,263 @@ import {
   ArrowRight,
   Building2,
   Check,
+  Globe2,
   Plus,
   Search,
   Sparkles,
   Users,
   X,
 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
+import { useEffect, useState } from "react";
+import type { ResearchRequest } from "@/lib/research";
 
-type ResearchOption = {
-  id: string;
-  name: string;
-  detail: string;
+type OnboardingDraft = {
+  competitors?: string[];
+  audiences?: string[];
+  platforms?: string[];
+  goalTitle?: string;
+  goalDescription?: string;
 };
 
-const initialCompanies: ResearchOption[] = [
-  { id: "duolingo", name: "Duolingo", detail: "Consumer brand" },
-  { id: "notion", name: "Notion", detail: "Productivity software" },
-  { id: "canva", name: "Canva", detail: "Design platform" },
-];
+const platformOptions = ["Reddit", "LinkedIn", "Instagram", "X"];
 
-const initialAudiences: ResearchOption[] = [
-  { id: "founders", name: "Startup founders", detail: "Early-stage teams" },
-  { id: "social", name: "Social media managers", detail: "In-house and agency" },
-  { id: "solo", name: "Solo marketers", detail: "One-person teams" },
-  { id: "skincare", name: "Skincare creators", detail: "Creator-led brands" },
-];
+function InputList({
+  icon,
+  title,
+  description,
+  items,
+  input,
+  placeholder,
+  setInput,
+  onAdd,
+  onRemove,
+}: {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  items: string[];
+  input: string;
+  placeholder: string;
+  setInput: (value: string) => void;
+  onAdd: (event: FormEvent) => void;
+  onRemove: (item: string) => void;
+}) {
+  return (
+    <section className="research-input-card">
+      <div className="research-input-heading">
+        <span className="selection-icon blue" aria-hidden="true">{icon}</span>
+        <div>
+          <h2>{title}</h2>
+          <p>{description}</p>
+        </div>
+      </div>
+      <div className="research-input-list">
+        {items.map((item) => (
+          <div className="research-input-row" key={item}>
+            <span>{item}</span>
+            <button type="button" onClick={() => onRemove(item)} aria-label={`Remove ${item}`}>
+              <X size={15} aria-hidden="true" />
+            </button>
+          </div>
+        ))}
+        {items.length === 0 ? <p className="list-empty">Add at least one.</p> : null}
+      </div>
+      <form className="quick-add" onSubmit={onAdd}>
+        <input value={input} onChange={(event) => setInput(event.target.value)} placeholder={placeholder} />
+        <button className="icon-button" type="submit" aria-label={`Add to ${title.toLowerCase()}`}>
+          <Plus size={18} aria-hidden="true" />
+        </button>
+      </form>
+    </section>
+  );
+}
 
 export function ResearchBuilder() {
-  const [companies, setCompanies] = useState(initialCompanies);
-  const [audiences, setAudiences] = useState(initialAudiences);
-  const [selectedCompanies, setSelectedCompanies] = useState<string[]>(["duolingo"]);
-  const [selectedAudiences, setSelectedAudiences] = useState<string[]>(["social"]);
+  const [platforms, setPlatforms] = useState<string[]>(["Reddit", "LinkedIn", "Instagram"]);
+  const [companies, setCompanies] = useState<string[]>(["Amazon", "Google", "Duolingo"]);
+  const [audiences, setAudiences] = useState<string[]>(["Women ages 18–20 based in Texas"]);
   const [companyInput, setCompanyInput] = useState("");
   const [audienceInput, setAudienceInput] = useState("");
+  const [goalTitle, setGoalTitle] = useState("");
+  const [goalDescription, setGoalDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const selectionCount = selectedCompanies.length + selectedAudiences.length;
-  const selectionSummary = useMemo(() => {
-    const companyNames = companies.filter((company) => selectedCompanies.includes(company.id)).map((item) => item.name);
-    const audienceNames = audiences.filter((audience) => selectedAudiences.includes(audience.id)).map((item) => item.name);
-    return { companyNames, audienceNames };
-  }, [audiences, companies, selectedAudiences, selectedCompanies]);
+  useEffect(() => {
+    const storedDraft = sessionStorage.getItem("campco-onboarding-draft");
+    if (!storedDraft) return;
 
-  function toggleSelection(id: string, selected: string[], update: (value: string[]) => void) {
-    update(selected.includes(id) ? selected.filter((item) => item !== id) : [...selected, id]);
-    setSubmitted(false);
-  }
+    try {
+      const draft = JSON.parse(storedDraft) as OnboardingDraft;
+      if (draft.competitors?.length) setCompanies(draft.competitors);
+      if (draft.audiences?.length) setAudiences(draft.audiences);
+      if (draft.platforms?.length) setPlatforms(draft.platforms);
+      setGoalTitle(draft.goalTitle ?? "");
+      setGoalDescription(draft.goalDescription ?? "");
+    } catch {
+      sessionStorage.removeItem("campco-onboarding-draft");
+    }
+  }, []);
 
-  function addOption(
+  function addItem(
     event: FormEvent,
     value: string,
     setValue: (value: string) => void,
-    options: ResearchOption[],
-    setOptions: (value: ResearchOption[]) => void,
-    selected: string[],
-    setSelected: (value: string[]) => void,
+    items: string[],
+    setItems: (value: string[]) => void,
   ) {
     event.preventDefault();
-    const name = value.trim();
-    if (!name) return;
-
-    const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${options.length}`;
-    setOptions([...options, { id, name, detail: "Added by you" }]);
-    setSelected([...selected, id]);
+    const nextItem = value.trim();
+    if (!nextItem || items.includes(nextItem)) return;
+    setItems([...items, nextItem]);
     setValue("");
     setSubmitted(false);
   }
 
+  const ready = platforms.length > 0 && companies.length > 0 && audiences.length > 0;
+
+  function runResearch() {
+    const request: ResearchRequest = { platforms, companies, audiences };
+    sessionStorage.setItem("campco-research-request", JSON.stringify(request));
+    setSubmitted(true);
+  }
+
   return (
     <div className="research-builder">
-      <div className="research-columns">
-        <section className="selection-card" aria-labelledby="companies-title">
-          <div className="selection-heading">
-            <span className="selection-icon blue" aria-hidden="true"><Building2 size={20} /></span>
-            <div>
-              <h2 id="companies-title">Companies to analyze</h2>
-              <p>Choose competitors or brands worth learning from.</p>
-            </div>
+      {goalTitle || goalDescription ? (
+        <section className="goal-strip" aria-label="Campaign goal">
+          <span className="selection-icon lime" aria-hidden="true"><Sparkles size={19} /></span>
+          <div>
+            <span>Campaign goal</span>
+            <strong>{goalTitle || "Untitled campaign"}</strong>
+            {goalDescription ? <p>{goalDescription}</p> : null}
           </div>
-          <div className="selection-list">
-            {companies.map((company) => {
-              const selected = selectedCompanies.includes(company.id);
-              return (
-                <button
-                  className="selection-option"
-                  data-selected={selected || undefined}
-                  type="button"
-                  aria-pressed={selected}
-                  key={company.id}
-                  onClick={() => toggleSelection(company.id, selectedCompanies, setSelectedCompanies)}
-                >
-                  <span><strong>{company.name}</strong><small>{company.detail}</small></span>
-                  <span className="selection-check" aria-hidden="true">{selected ? <Check size={14} /> : <Plus size={14} />}</span>
-                </button>
-              );
-            })}
-          </div>
-          <form
-            className="quick-add"
-            onSubmit={(event) => addOption(event, companyInput, setCompanyInput, companies, setCompanies, selectedCompanies, setSelectedCompanies)}
-          >
-            <input
-              aria-label="Company name or URL"
-              value={companyInput}
-              onChange={(event) => setCompanyInput(event.target.value)}
-              placeholder="Company name or URL"
-            />
-            <button className="icon-button" type="submit" aria-label="Add company"><Plus size={18} /></button>
-          </form>
         </section>
+      ) : null}
 
-        <section className="selection-card" aria-labelledby="audiences-title">
-          <div className="selection-heading">
-            <span className="selection-icon coral" aria-hidden="true"><Users size={20} /></span>
-            <div>
-              <h2 id="audiences-title">Audiences to research</h2>
-              <p>Choose the people whose interests and behavior matter.</p>
-            </div>
+      <section className="platform-card" aria-labelledby="platforms-title">
+        <div className="research-input-heading">
+          <span className="selection-icon coral" aria-hidden="true"><Globe2 size={20} /></span>
+          <div>
+            <h2 id="platforms-title">Platforms</h2>
+            <p>Choose where the research agent should look for recent marketing and audience signals.</p>
           </div>
-          <div className="selection-list">
-            {audiences.map((audience) => {
-              const selected = selectedAudiences.includes(audience.id);
-              return (
-                <button
-                  className="selection-option"
-                  data-selected={selected || undefined}
-                  type="button"
-                  aria-pressed={selected}
-                  key={audience.id}
-                  onClick={() => toggleSelection(audience.id, selectedAudiences, setSelectedAudiences)}
-                >
-                  <span><strong>{audience.name}</strong><small>{audience.detail}</small></span>
-                  <span className="selection-check" aria-hidden="true">{selected ? <Check size={14} /> : <Plus size={14} />}</span>
-                </button>
-              );
-            })}
-          </div>
-          <form
-            className="quick-add"
-            onSubmit={(event) => addOption(event, audienceInput, setAudienceInput, audiences, setAudiences, selectedAudiences, setSelectedAudiences)}
-          >
-            <input
-              aria-label="Audience description"
-              value={audienceInput}
-              onChange={(event) => setAudienceInput(event.target.value)}
-              placeholder="Describe another audience"
-            />
-            <button className="icon-button" type="submit" aria-label="Add audience"><Plus size={18} /></button>
-          </form>
-        </section>
+        </div>
+        <div className="platform-grid research-platform-grid">
+          {platformOptions.map((platform) => (
+            <label className="platform-option" key={platform}>
+              <input
+                type="checkbox"
+                checked={platforms.includes(platform)}
+                onChange={(event) => {
+                  setPlatforms(event.target.checked
+                    ? [...platforms, platform]
+                    : platforms.filter((item) => item !== platform));
+                  setSubmitted(false);
+                }}
+              />
+              <span>{platform}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <div className="research-columns">
+        <InputList
+          icon={<Building2 size={20} />}
+          title="Companies"
+          description="Competitors or reference brands to analyze."
+          items={companies}
+          input={companyInput}
+          placeholder="Add company name or URL"
+          setInput={setCompanyInput}
+          onAdd={(event) => addItem(event, companyInput, setCompanyInput, companies, setCompanies)}
+          onRemove={(item) => {
+            setCompanies(companies.filter((entry) => entry !== item));
+            setSubmitted(false);
+          }}
+        />
+        <InputList
+          icon={<Users size={20} />}
+          title="Audiences"
+          description="Use plain language and be as specific as useful."
+          items={audiences}
+          input={audienceInput}
+          placeholder="e.g. Women 18–20 in Texas"
+          setInput={setAudienceInput}
+          onAdd={(event) => addItem(event, audienceInput, setAudienceInput, audiences, setAudiences)}
+          onRemove={(item) => {
+            setAudiences(audiences.filter((entry) => entry !== item));
+            setSubmitted(false);
+          }}
+        />
       </div>
 
-      <section className="research-prompt-card" aria-labelledby="research-direction-title">
-        <div className="prompt-heading">
-          <Sparkles size={20} aria-hidden="true" />
-          <div>
-            <h2 id="research-direction-title">Research direction</h2>
-            <p>Tell the analyst what you want to learn from these selections.</p>
-          </div>
-        </div>
-        <textarea
-          rows={5}
-          placeholder="Example: Find the themes and formats that are working with these audiences. Show competitor patterns, gaps, and strong post ideas we could adapt."
-          onChange={() => setSubmitted(false)}
-        />
-        <div className="research-prompt-footer">
-          <div className="selection-summary" aria-live="polite">
-            <strong>{selectionCount} selected</strong>
-            <span>{[...selectionSummary.companyNames, ...selectionSummary.audienceNames].join(", ") || "Add at least one company or audience"}</span>
-          </div>
-          <button
-            className="button primary"
-            type="button"
-            disabled={selectionCount === 0}
-            onClick={() => setSubmitted(true)}
-          >
-            Start research
-            <ArrowRight size={17} aria-hidden="true" />
-          </button>
-        </div>
-      </section>
-
-      <section className="research-output" aria-labelledby="research-output-title">
-        <div className="research-output-icon" aria-hidden="true">
-          {submitted ? <Check size={21} /> : <Search size={21} />}
-        </div>
+      <div className="research-run-bar">
         <div>
-          <h2 id="research-output-title">{submitted ? "Research brief ready" : "Research results"}</h2>
-          <p>
-            {submitted
-              ? "The company and audience selections are ready for the Monid and analyst pipeline."
-              : "Trends, competitor patterns, standout evidence, and post opportunities will appear here."}
-          </p>
+          <strong>{ready ? "Research input ready" : "Complete all three inputs"}</strong>
+          <span>{platforms.length} platforms · {companies.length} companies · {audiences.length} audiences</span>
         </div>
-        {submitted ? (
-          <button className="button text-button" type="button" onClick={() => setSubmitted(false)}>
-            <X size={16} aria-hidden="true" /> Clear
-          </button>
-        ) : null}
-      </section>
+        <button className="button primary" type="button" disabled={!ready} onClick={runResearch}>
+          Run research
+          <ArrowRight size={17} aria-hidden="true" />
+        </button>
+      </div>
+
+      {!submitted ? (
+        <section className="research-output empty" aria-labelledby="research-output-title">
+          <span className="research-output-icon" aria-hidden="true"><Search size={21} /></span>
+          <div>
+            <h2 id="research-output-title">Research output</h2>
+            <p>Company analysis, audience signals, and standout data will appear here.</p>
+          </div>
+        </section>
+      ) : (
+        <section className="results-shell" aria-labelledby="research-output-title">
+          <div className="results-heading">
+            <div>
+              <p className="eyebrow">Output contract</p>
+              <h2 id="research-output-title">Research request ready</h2>
+              <p>The backend can now discover data sources, run them, and synthesize the response into these three outputs.</p>
+            </div>
+            <span className="ready-state"><Check size={14} /> Brief ready</span>
+          </div>
+
+          <div className="result-section">
+            <h3>Company analysis</h3>
+            <p className="result-section-description">One text result per company: what is working, what is not, and gaps worth pursuing.</p>
+            <div className="result-items">
+              {companies.map((company) => (
+                <article className="result-item" key={company}>
+                  <strong>{company}</strong>
+                  <span>Company research will map here.</span>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="result-section">
+            <h3>Audience signals</h3>
+            <p className="result-section-description">One text result per audience: what they are engaging with and responding to recently.</p>
+            <div className="result-items">
+              {audiences.map((audience) => (
+                <article className="result-item" key={audience}>
+                  <strong>{audience}</strong>
+                  <span>Audience research will map here.</span>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="standout-result">
+            <span className="selection-icon lime" aria-hidden="true"><Sparkles size={19} /></span>
+            <div>
+              <h3>Standout data</h3>
+              <p>The analyst’s most important cross-company or cross-audience finding will appear here.</p>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

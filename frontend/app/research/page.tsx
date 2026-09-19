@@ -9,8 +9,8 @@ export default function ResearchPage() {
     <div className="page research-page">
       <PageHeader
         eyebrow="Research workspace"
-        title="Choose what Campco should investigate."
-        description="Select companies and audiences, then give the research engine a question or direction."
+        title="Build the research input."
+        description="Choose platforms, companies, and audience groups. The research agent will return competitor analysis, audience signals, and the standout finding."
       />
       <ResearchBuilder />
     </div>
