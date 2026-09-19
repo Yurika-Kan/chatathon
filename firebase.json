@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "chatathon-2026",
     "source": "frontend",
     "frameworksBackend": {},
     "ignore": [
