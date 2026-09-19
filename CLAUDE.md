@@ -40,8 +40,25 @@ The GitHub Actions workflow at `.github/workflows/firebase-hosting-deploy.yml` i
 - `firebase emulators:start` — run both locally via emulators
 - `firebase use` — confirm active project
 
+## Monid integration
+
+The backend uses the Monid CLI (`@monid-ai/cli`) as a data layer for scraping social platforms and SEO data. The wrapper lives in `backend/monid.js` and shells out to the locally installed binary.
+
+- **API key**: stored as a Firebase secret (`MONID_KEY`). Set via `firebase functions:secrets:set MONID_KEY`. For local dev, use `backend/.secret.local`.
+- **Credentials bootstrap**: on first call in Cloud Functions, the wrapper writes `~/.config/monid/credentials.yaml` from the `MONID_KEY` env var.
+- **Available providers**: Ahrefs (SEO/competitors), Apify (Reddit, Instagram), TikHub (Twitter, LinkedIn), MrScraper (website extraction).
+
+## Backend API endpoints
+
+Base URL (production): `https://us-central1-chatathon-2026.cloudfunctions.net/api`
+
+| Method | Path | Input | Returns |
+|--------|------|-------|---------|
+| GET | `/health` | — | `{ status: "ok" }` |
+| POST | `/monid/competitors` | `{ domain, country? }` | Ahrefs organic competitors (top 5, generic domains filtered out) |
+
 ## Rules
 
-- Do not commit `.env` files or service account keys.
+- Do not commit `.env` files, `.secret.local`, or service account keys.
 - Backend functions use v2 (`firebase-functions/v2/https`), not v1.
-- Frontend has no build tooling beyond Next.js — no Tailwind, no TypeScript.
+- Frontend is Next.js with TypeScript (migrated from JS).
