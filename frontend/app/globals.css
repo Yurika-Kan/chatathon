@@ -330,6 +330,10 @@ h2 {
   padding: 34px 36px;
 }
 
+.flow-step:not([hidden]) {
+  animation: ui-reveal 220ms cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
 .flow-step[hidden] {
   display: none;
 }
@@ -508,6 +512,12 @@ textarea::placeholder {
   font-size: 13px;
   font-weight: 620;
   cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background-color 140ms ease, transform 140ms ease;
+}
+
+.platform-option:hover {
+  border-color: #c3c9d2;
+  transform: translateY(-1px);
 }
 
 .platform-option:has(input:checked) {
@@ -582,6 +592,7 @@ textarea::placeholder {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+  animation: ui-reveal 240ms cubic-bezier(0.2, 0.75, 0.3, 1) both;
 }
 
 .editable-list {
@@ -615,6 +626,60 @@ textarea::placeholder {
   background: #fff;
   font-size: 12px;
   line-height: 1.35;
+  animation: row-reveal 200ms cubic-bezier(0.2, 0.75, 0.3, 1) both;
+  transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.editable-item:hover,
+.research-input-row:hover {
+  border-color: #cbd1da;
+  background: #fff;
+  box-shadow: 0 4px 12px rgb(18 25 38 / 5%);
+}
+
+.item-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.item-identity > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.company-mark,
+.audience-mark {
+  position: relative;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #e0e3e8;
+  border-radius: 8px;
+  color: #3e4a5d;
+  background: #f3f5f8;
+}
+
+.company-mark img {
+  position: absolute;
+  inset: 4px;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.company-mark-fallback {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.audience-mark {
+  color: #3858b6;
+  background: var(--blue-soft);
 }
 
 .editable-item button,
@@ -628,6 +693,7 @@ textarea::placeholder {
   border-radius: 7px;
   color: #737b89;
   background: transparent;
+  transition: color 130ms ease, background-color 130ms ease;
 }
 
 .editable-item button:hover,
@@ -678,6 +744,11 @@ textarea::placeholder {
   border-radius: 9px;
   font-size: 13px;
   font-weight: 700;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+}
+
+.button:not(:disabled):active {
+  transform: translateY(1px);
 }
 
 .button.primary {
@@ -688,6 +759,7 @@ textarea::placeholder {
 
 .button.primary:hover {
   background: var(--lime-strong);
+  box-shadow: 0 5px 14px rgb(105 135 20 / 16%);
 }
 
 .button.secondary {
@@ -794,6 +866,8 @@ textarea::placeholder {
   border-radius: 9px;
   font-size: 12px;
   line-height: 1.4;
+  animation: row-reveal 200ms cubic-bezier(0.2, 0.75, 0.3, 1) both;
+  transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
 }
 
 .list-empty {
@@ -832,6 +906,7 @@ textarea::placeholder {
 
 .results-shell {
   overflow: hidden;
+  animation: ui-reveal 260ms cubic-bezier(0.2, 0.75, 0.3, 1) both;
 }
 
 .results-heading {
@@ -1041,6 +1116,7 @@ textarea::placeholder {
   border-radius: 8px;
   color: #5d6573;
   background: transparent;
+  transition: color 130ms ease, background-color 130ms ease, transform 130ms ease;
 }
 
 .quick-add .icon-button {
@@ -1050,6 +1126,31 @@ textarea::placeholder {
 
 .icon-button:hover {
   background: #eef0f3;
+  transform: scale(1.04);
+}
+
+@keyframes ui-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes row-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .research-prompt-card {

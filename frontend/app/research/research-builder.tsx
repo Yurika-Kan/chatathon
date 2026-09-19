@@ -14,6 +14,7 @@ import {
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import type { ResearchRequest } from "@/lib/research";
+import { CompanyMark } from "@/app/ui/company-mark";
 
 type OnboardingDraft = {
   competitors?: string[];
@@ -35,6 +36,7 @@ function InputList({
   setInput,
   onAdd,
   onRemove,
+  kind,
 }: {
   icon: ReactNode;
   title: string;
@@ -45,6 +47,7 @@ function InputList({
   setInput: (value: string) => void;
   onAdd: (event: FormEvent) => void;
   onRemove: (item: string) => void;
+  kind: "company" | "audience";
 }) {
   return (
     <section className="research-input-card">
@@ -56,9 +59,20 @@ function InputList({
         </div>
       </div>
       <div className="research-input-list">
-        {items.map((item) => (
-          <div className="research-input-row" key={item}>
-            <span>{item}</span>
+        {items.map((item, index) => (
+          <div
+            className="research-input-row"
+            key={item}
+            style={{ animationDelay: `${index * 35}ms` }}
+          >
+            <span className="item-identity">
+              {kind === "company" ? (
+                <CompanyMark company={item} />
+              ) : (
+                <span className="audience-mark" aria-hidden="true"><Users size={15} /></span>
+              )}
+              <span>{item}</span>
+            </span>
             <button type="button" onClick={() => onRemove(item)} aria-label={`Remove ${item}`}>
               <X size={15} aria-hidden="true" />
             </button>
@@ -168,6 +182,7 @@ export function ResearchBuilder() {
       <div className="research-columns">
         <InputList
           icon={<Building2 size={20} />}
+          kind="company"
           title="Companies"
           description="Competitors or reference brands to analyze."
           items={companies}
@@ -182,6 +197,7 @@ export function ResearchBuilder() {
         />
         <InputList
           icon={<Users size={20} />}
+          kind="audience"
           title="Audiences"
           description="Use plain language and be as specific as useful."
           items={audiences}
@@ -232,7 +248,10 @@ export function ResearchBuilder() {
             <div className="result-items">
               {companies.map((company) => (
                 <article className="result-item" key={company}>
-                  <strong>{company}</strong>
+                  <strong className="item-identity">
+                    <CompanyMark company={company} />
+                    <span>{company}</span>
+                  </strong>
                   <span>Company research will map here.</span>
                 </article>
               ))}
