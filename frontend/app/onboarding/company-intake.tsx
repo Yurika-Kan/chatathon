@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const steps = ["Connect", "Discover", "Campaign"] as const;
+const campaignPlatforms = ["Reddit", "LinkedIn", "Instagram", "X"];
 
 const suggestedCompetitors = ["Duolingo", "Notion", "Canva"];
 const suggestedAudiences = [
@@ -100,10 +101,9 @@ export function CompanyIntake() {
 
     const form = document.querySelector<HTMLFormElement>(".flow-card");
     const data = form ? new FormData(form) : null;
-    const platforms = ["LinkedIn", "Instagram", "Reddit", "X"].filter((platform) => {
-      const key = `${platform.toLowerCase()}Url`;
-      return Boolean(data?.get(key));
-    });
+    const platforms = data
+      ? data.getAll("platforms").filter((value): value is string => typeof value === "string")
+      : [];
 
     sessionStorage.setItem(
       "campco-onboarding-draft",
@@ -232,6 +232,23 @@ export function CompanyIntake() {
             placeholder="What are you trying to achieve, what are you promoting, and what should change for the audience?"
           />
         </label>
+        <fieldset className="platform-fieldset campaign-platforms">
+          <legend>Platforms to research for this campaign</legend>
+          <p>Choose where Campco should compare competitors and audience behavior.</p>
+          <div className="platform-grid research-platform-grid">
+            {campaignPlatforms.map((platform, index) => (
+              <label className="platform-option" key={platform}>
+                <input
+                  type="checkbox"
+                  name="platforms"
+                  value={platform}
+                  defaultChecked={index < 3}
+                />
+                <span>{platform}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <div className="campaign-context-note">
           <Sparkles size={18} aria-hidden="true" />
           <p>Campco will combine this goal with your sources, competitors, and audience groups when it creates the research brief.</p>

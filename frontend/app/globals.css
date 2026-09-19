@@ -640,6 +640,17 @@ textarea::placeholder {
   margin-top: 18px;
 }
 
+.campaign-platforms {
+  margin-top: 20px;
+}
+
+.campaign-platforms > p {
+  margin: -3px 0 11px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .campaign-context-note {
   display: flex;
   align-items: flex-start;
