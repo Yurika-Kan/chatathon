@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "source": "public",
+    "frameworksBackend": {},
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
